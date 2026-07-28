@@ -137,6 +137,38 @@ No secret is needed for CI (typecheck, tests, build, migrations) — that job ru
 entirely against a local database. The deploy workflow checks both secrets are
 present up front and fails with a named error if either is missing.
 
+#### API token permissions
+
+Being *present* is not enough — the token must be scoped for every binding the
+deploy touches. Create it from **My Profile › API Tokens › Create Custom Token**
+with these permissions, all on the account that owns the resources above:
+
+| Permission | Level | Needed for |
+|---|---|---|
+| Account · Workers Scripts | Edit | `wrangler deploy` |
+| Account · D1 | Edit | `d1 migrations apply`, module catalogue sync |
+| Account · Workers R2 Storage | Edit | media bucket binding |
+| Account · Workers KV Storage | Edit | rate-limit namespace binding |
+
+A token missing any of these fails with:
+
+```
+A request to the Cloudflare API (/accounts/<id>/d1/...) failed.
+The given account is not valid or is not authorized to access this
+service [code: 7403]
+```
+
+`7403` means one of two things, and both are worth checking:
+
+1. the token lacks the permission for that service, or
+2. `CLOUDFLARE_ACCOUNT_ID` points at a **different account** than the one where
+   `app-desa-db`, `app-desa-kv` and `app-desa-media` actually live.
+
+For (2), confirm the account with `npx wrangler d1 list` using the same token —
+if `app-desa-db` is not in the output, the account is wrong. Either repoint the
+secret, or recreate the three resources in the target account and update their
+ids in `wrangler.jsonc`.
+
 Application secrets (`SESSION_SECRET`, `TURNSTILE_SECRET_KEY`) are optional and
 set with `wrangler secret put`, never committed.
 
