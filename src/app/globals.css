@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+/*
+ * Brand colours are injected per request from the `villages` row as CSS custom
+ * properties on <html>, so a new tenant restyles the whole site without a
+ * rebuild. The values below are neutral fallbacks only.
+ */
+@theme {
+  --color-brand: var(--village-primary, #15803d);
+  --color-brand-dark: var(--village-secondary, #166534);
+  --color-brand-accent: var(--village-accent, #f59e0b);
+}
+
+:root {
+  --surface: #ffffff;
+  --surface-muted: #f6f7f9;
+  --border: #e4e7ec;
+  --text: #16191d;
+  --text-muted: #5b6472;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface: #0f1216;
+    --surface-muted: #171b21;
+    --border: #2a3039;
+    --text: #eef1f5;
+    --text-muted: #9aa5b4;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --surface: #0f1216;
+  --surface-muted: #171b21;
+  --border: #2a3039;
+  --text: #eef1f5;
+  --text-muted: #9aa5b4;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--surface);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Accessibility: a visible focus ring everywhere, and a skip link that only
+   appears once focused. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-brand);
+  color: #fff;
+  border-radius: 0.375rem;
+}
+
+/* Rendered CMS bodies: give raw HTML from the editor sane defaults. */
+.prose-cms :where(h2) {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+}
+.prose-cms :where(h3) {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+.prose-cms :where(p) {
+  margin: 0.85rem 0;
+  line-height: 1.75;
+}
+.prose-cms :where(ul, ol) {
+  margin: 0.85rem 0 0.85rem 1.5rem;
+  list-style: revert;
+}
+.prose-cms :where(a) {
+  color: var(--color-brand);
+  text-decoration: underline;
+}
+.prose-cms :where(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+.prose-cms :where(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+.prose-cms :where(th, td) {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  display: inline-flex;
+  min-width: 200%;
+  animation: marquee 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+    min-width: 0;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "app-desa",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "app-desa-db",
+      "database_id": "0a63fe69-8fe1-4637-96a2-9760374ca9f6",
+      "migrations_dir": "db/migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "07ec933b5c4440759e3fc72830b5a549"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "app-desa-media"
+    }
+  ],
+  "vars": {
+    // Slug of the village served when the request hostname is not mapped to a
+    // village in the `villages` table. Change this per deployment - the app
+    // never hardcodes a village anywhere in code.
+    "DEFAULT_VILLAGE_SLUG": "demo",
+    "APP_NAME": "app-desa"
+  }
+}
