@@ -54,12 +54,19 @@ jobs:
             exit 1
           fi
 
+      # First step that actually talks to Cloudflare, so it is where a
+      # misscoped token surfaces. Translate the API's opaque 7403 into the two
+      # things that actually cause it.
       - name: Apply D1 migrations
         if: github.event_name == 'push' || inputs.run_migrations
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler d1 migrations apply app-desa-db --remote
+        run: |
+          if ! npx wrangler d1 migrations apply app-desa-db --remote; then
+            echo "::error::Cloudflare rejected the request. Either CLOUDFLARE_API_TOKEN lacks 'D1: Edit' (plus Workers Scripts, R2 and KV Edit), or CLOUDFLARE_ACCOUNT_ID points at a different account than the one owning app-desa-db. See README > API token permissions."
+            exit 1
+          fi
 
       # Both files are idempotent upserts, so re-running on every deploy keeps
       # the module catalogue in step with the code without touching any
