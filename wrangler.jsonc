@@ -15,14 +15,14 @@
     {
       "binding": "DB",
       "database_name": "app-desa-db",
-      "database_id": "0a63fe69-8fe1-4637-96a2-9760374ca9f6",
+      "database_id": "16d20f08-59bc-4935-9ba5-0f7e0e1410ae",
       "migrations_dir": "db/migrations"
     }
   ],
   "kv_namespaces": [
     {
       "binding": "KV",
-      "id": "07ec933b5c4440759e3fc72830b5a549"
+      "id": "65b5b46d6a884fc99db07018e24112f3"
     }
   ],
   "r2_buckets": [
