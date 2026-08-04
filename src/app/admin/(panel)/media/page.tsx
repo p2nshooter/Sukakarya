@@ -16,7 +16,7 @@ export default async function AdminMediaPage() {
       <h1 className="text-2xl font-bold">Media</h1>
       <p className="mt-1 text-sm text-[var(--text-muted)]">
         Berkas disimpan di Cloudflare R2 dan disajikan melalui rute
-        <code className="mx-1 rounded bg-[var(--surface-muted)] px-1">/media/[id]</code>
+        <code className="mx-1 rounded bg-[var(--surface-1)] px-1">/media/[id]</code>
         yang memeriksa tenant dan hak akses.
       </p>
 
@@ -42,7 +42,7 @@ export default async function AdminMediaPage() {
               {media.kind === "image" ? (
                 <Thumb src={`/media/${media.id}`} alt={media.altText ?? media.fileName} ratio="1/1" />
               ) : (
-                <div className="grid aspect-square place-items-center bg-[var(--surface-muted)] text-3xl">
+                <div className="grid aspect-square place-items-center bg-[var(--surface-1)] text-3xl">
                   <span aria-hidden>
                     {media.kind === "video"
                       ? "▶"

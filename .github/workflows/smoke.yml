@@ -86,6 +86,16 @@ jobs:
           check "Sitemap"        "/sitemap.xml"     200
           check "Robots"         "/robots.txt"      200
           check "Unknown page"   "/tidak-ada-nya"   404
+          check "Letter services" "/layanan"        200
+          check "Letter tracking" "/layanan/lacak"  200
+          check "UMKM"           "/umkm"            200
+          check "Tourism"        "/wisata"          200
+          check "Potentials"     "/potensi"         200
+          check "Transparency"   "/transparansi"    200
+
+          # A service detail page proves the dynamic form engine reached the
+          # database, not just that the listing rendered.
+          check "Service detail" "/layanan/surat-keterangan-usaha" 200
 
           # The admin panel must not be reachable without a session. A redirect
           # to the login page is the pass condition; a 200 would mean the gate
@@ -100,6 +110,12 @@ jobs:
           echo "| Admin panel is gated \`/admin\` | 30x | ${admin} | ${mark} |" >> "$GITHUB_STEP_SUMMARY"
 
           contains "robots.txt disallows /admin" "/robots.txt" "Disallow: /admin"
+
+          # The homepage must be showing real content, not a column of empty
+          # states - a deploy that renders but has nothing in it is not a pass.
+          contains "Homepage renders news"    "/" "Berita"
+          contains "Homepage renders letters" "/" "Ajukan"
+          contains "Service form is rendered" "/layanan/surat-keterangan-usaha" "applicantName"
 
           echo "" >> "$GITHUB_STEP_SUMMARY"
           if [ "$failures" -ne 0 ]; then

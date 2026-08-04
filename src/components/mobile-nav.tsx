@@ -1,60 +1,184 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { NavItem } from "@/lib/navigation";
+import type { Village } from "@/lib/village";
 
-export function MobileNav({ items }: { items: NavItem[] }) {
+import {
+  IconChevronDown,
+  IconClose,
+  IconMail,
+  IconMenu,
+  IconPhone,
+} from "@/components/icons";
+
+/**
+ * Slide-in navigation for phones and tablets.
+ *
+ * Parents with children are disclosure groups rather than links plus a nested
+ * list: on a touch screen there is no hover, so a sub-menu needs an explicit
+ * control to open it. The parent's own page stays reachable through a "Lihat
+ * semua" entry inside the group.
+ */
+export function MobileNav({
+  items,
+  village,
+}: {
+  items: NavItem[];
+  village: Village;
+}) {
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
+  const close = () => setOpen(false);
 
   return (
     <div className="lg:hidden">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen(true)}
         aria-expanded={open}
         aria-controls="mobile-nav"
-        aria-label={open ? "Tutup menu" : "Buka menu"}
-        className="grid h-9 w-9 place-items-center rounded-md hover:bg-[var(--surface-muted)]"
+        aria-label="Buka menu"
+        className="grid h-10 w-10 place-items-center rounded-lg transition-colors hover:bg-[var(--surface-2)]"
       >
-        <span aria-hidden>{open ? "✕" : "☰"}</span>
+        <IconMenu className="h-5 w-5" />
       </button>
 
       {open ? (
-        <nav
-          id="mobile-nav"
-          aria-label="Navigasi seluler"
-          className="absolute inset-x-0 top-full max-h-[70vh] overflow-y-auto border-b border-[var(--border)] bg-[var(--surface)] p-3 shadow-lg"
-        >
-          {items.map((item) => (
-            <div key={item.id} className="py-0.5">
-              <Link
-                href={item.url}
-                target={item.target}
-                onClick={() => setOpen(false)}
-                className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-[var(--surface-muted)]"
+        <div className="fixed inset-0 z-[60]">
+          <button
+            type="button"
+            aria-label="Tutup menu"
+            onClick={close}
+            className="absolute inset-0 bg-[var(--scrim)] backdrop-blur-sm"
+          />
+
+          <nav
+            id="mobile-nav"
+            aria-label="Navigasi seluler"
+            className="absolute inset-y-0 right-0 flex w-[86%] max-w-sm flex-col border-l border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xl)]"
+          >
+            <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
+              <span className="min-w-0 truncate font-display font-bold">
+                {village.entityLabel} {village.name}
+              </span>
+              <button
+                type="button"
+                onClick={close}
+                aria-label="Tutup menu"
+                className="-mr-2 grid h-10 w-10 shrink-0 place-items-center rounded-lg transition-colors hover:bg-[var(--surface-2)]"
               >
-                {item.label}
-              </Link>
-              {item.children.length > 0 ? (
-                <div className="ml-3 border-l border-[var(--border)] pl-2">
-                  {item.children.map((child) => (
-                    <Link
-                      key={child.id}
-                      href={child.url}
-                      target={child.target}
-                      onClick={() => setOpen(false)}
-                      className="block rounded-md px-3 py-1.5 text-sm text-[var(--text-muted)] hover:bg-[var(--surface-muted)]"
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
+                <IconClose className="h-5 w-5" />
+              </button>
             </div>
-          ))}
-        </nav>
+
+            <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4">
+              {items.map((item) => {
+                const hasChildren = item.children.length > 0;
+                const isOpen = expanded === item.id;
+
+                if (!hasChildren) {
+                  return (
+                    <Link
+                      key={item.id}
+                      href={item.url}
+                      target={item.target}
+                      onClick={close}
+                      className="block rounded-lg px-3 py-2.5 font-medium transition-colors hover:bg-[var(--surface-2)]"
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <div key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => setExpanded(isOpen ? null : item.id)}
+                      aria-expanded={isOpen}
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left font-medium transition-colors hover:bg-[var(--surface-2)]"
+                    >
+                      {item.label}
+                      <IconChevronDown
+                        className={`h-4 w-4 opacity-60 transition-transform duration-200 ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {isOpen ? (
+                      <div className="ml-3 mt-0.5 space-y-0.5 border-l border-[var(--border)] pl-3">
+                        <Link
+                          href={item.url}
+                          target={item.target}
+                          onClick={close}
+                          className="block rounded-lg px-3 py-2 text-sm font-medium text-brand transition-colors hover:bg-[var(--surface-2)]"
+                        >
+                          Lihat semua
+                        </Link>
+                        {item.children.map((child) => (
+                          <Link
+                            key={child.id}
+                            href={child.url}
+                            target={child.target}
+                            onClick={close}
+                            className="block rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+
+            {village.phone || village.email ? (
+              <div className="space-y-1 border-t border-[var(--border)] px-5 py-4 text-sm">
+                {village.phone ? (
+                  <a
+                    href={`tel:${village.phone.replace(/\s/g, "")}`}
+                    className="flex items-center gap-2.5 py-1 text-[var(--text-muted)]"
+                  >
+                    <IconPhone className="h-4 w-4 shrink-0 text-brand" />
+                    {village.phone}
+                  </a>
+                ) : null}
+                {village.email ? (
+                  <a
+                    href={`mailto:${village.email}`}
+                    className="flex items-center gap-2.5 py-1 text-[var(--text-muted)]"
+                  >
+                    <IconMail className="h-4 w-4 shrink-0 text-brand" />
+                    <span className="truncate">{village.email}</span>
+                  </a>
+                ) : null}
+              </div>
+            ) : null}
+          </nav>
+        </div>
       ) : null}
     </div>
   );

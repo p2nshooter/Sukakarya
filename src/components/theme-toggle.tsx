@@ -36,7 +36,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={theme === "dark" ? "Aktifkan mode terang" : "Aktifkan mode gelap"}
-      className="grid h-9 w-9 place-items-center rounded-md hover:bg-[var(--surface-muted)]"
+      className="grid h-9 w-9 place-items-center rounded-md hover:bg-[var(--surface-1)]"
     >
       <span aria-hidden>{theme === "dark" ? "☀" : "☾"}</span>
     </button>

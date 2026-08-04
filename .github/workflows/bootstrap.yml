@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       seed_baseline:
-        description: "Also apply db/seed/seed.sql (roles, permissions, demo tenant). Re-running resets the demo tenant's branding, menus and sections."
+        description: "Also apply the baseline seed and demo content (roles, permissions, demo tenant, starter articles and listings). Re-running resets the demo tenant's branding, menus and sections."
         type: boolean
         default: false
 
@@ -87,8 +87,9 @@ jobs:
           npx wrangler d1 migrations apply app-desa-db --remote
           npx wrangler d1 execute app-desa-db --remote --file=./db/seed/modules.sql
           npx wrangler d1 execute app-desa-db --remote --file=./db/seed/seed.sql
+          npx wrangler d1 execute app-desa-db --remote --file=./db/seed/demo-content.sql
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           npx wrangler d1 execute app-desa-db --remote --json \
-            --command "SELECT (SELECT count(*) FROM villages) AS villages, (SELECT count(*) FROM modules) AS modules, (SELECT count(*) FROM roles) AS roles, (SELECT count(*) FROM page_sections) AS sections" \
+            --command "SELECT (SELECT count(*) FROM villages) AS villages, (SELECT count(*) FROM modules) AS modules, (SELECT count(*) FROM posts) AS posts, (SELECT count(*) FROM services) AS services, (SELECT count(*) FROM umkm) AS umkm, (SELECT count(*) FROM page_sections) AS sections" \
             2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"

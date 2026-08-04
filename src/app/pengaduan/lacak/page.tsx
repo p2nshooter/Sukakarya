@@ -106,7 +106,7 @@ export default async function TrackComplaintPage({
               Diperbarui {formatDateTime(complaint.updated_at, locale, village.timezone)}
             </p>
             {complaint.response ? (
-              <div className="mt-4 rounded-lg bg-[var(--surface-muted)] p-4">
+              <div className="mt-4 rounded-lg bg-[var(--surface-1)] p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide">
                   Tanggapan Petugas
                 </p>

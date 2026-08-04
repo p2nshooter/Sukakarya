@@ -3,12 +3,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { canAccess } from "@/lib/access";
+import { isAiEnabled } from "@/lib/ai";
 import { getViewer } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { getDb } from "@/lib/env";
 import { formatDateTime } from "@/lib/format";
 import { newId, uniqueSlug } from "@/lib/id";
 import { requireVillage } from "@/lib/village";
+
+import { AiArticleFields } from "@/components/admin/ai-editor";
 
 import { EmptyState } from "@/components/ui";
 
@@ -128,6 +131,7 @@ export default async function AdminPostsPage({
 }) {
   const params = await searchParams;
   const village = await requireVillage();
+  const aiEnabled = isAiEnabled();
 
   const { results } = await getDb()
     .prepare(
@@ -161,61 +165,22 @@ export default async function AdminPostsPage({
         <summary className="cursor-pointer font-semibold">Tulis konten baru</summary>
 
         <form action={createPost} className="mt-5 grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium">
-                Judul
-              </label>
-              <input
-                id="title"
-                name="title"
-                required
-                className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="type" className="block text-sm font-medium">
-                Jenis
-              </label>
-              <select
-                id="type"
-                name="type"
-                className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
-              >
-                <option value="news">Berita</option>
-                <option value="article">Artikel</option>
-                <option value="announcement">Pengumuman</option>
-              </select>
-            </div>
+          <div>
+            <label htmlFor="type" className="mb-1.5 block text-sm font-medium">
+              Jenis
+            </label>
+            <select
+              id="type"
+              name="type"
+              className="w-full rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-4 focus:ring-brand/15"
+            >
+              <option value="news">Berita</option>
+              <option value="article">Artikel</option>
+              <option value="announcement">Pengumuman</option>
+            </select>
           </div>
 
-          <div>
-            <label htmlFor="excerpt" className="block text-sm font-medium">
-              Ringkasan
-            </label>
-            <textarea
-              id="excerpt"
-              name="excerpt"
-              rows={2}
-              className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="body" className="block text-sm font-medium">
-              Isi (HTML sederhana diperbolehkan)
-            </label>
-            <textarea
-              id="body"
-              name="body"
-              rows={8}
-              className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 font-mono text-sm"
-            />
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
-              Isi disaring dengan allowlist sebelum ditampilkan: script, iframe dan
-              atribut event dibuang otomatis.
-            </p>
-          </div>
+          <AiArticleFields enabled={aiEnabled} />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
