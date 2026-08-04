@@ -5,7 +5,7 @@ import { listBanners, listSocialLinks } from "@/lib/content";
 import { getDb } from "@/lib/env";
 import { getVillageModules } from "@/lib/modules/registry";
 import { getMenu } from "@/lib/navigation";
-import { requireVillage } from "@/lib/village";
+import { getVillageSettings, requireVillage } from "@/lib/village";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -34,15 +34,25 @@ export async function SiteShell({ children }: { children: ReactNode }) {
   const viewer = await getViewer();
   const modules = await getVillageModules(village.id);
 
-  const [primaryNav, footerNav, socials, runningBanners, emergency, visitors] =
-    await Promise.all([
-      getMenu(village.id, "primary"),
-      getMenu(village.id, "footer"),
-      listSocialLinks(village.id),
-      listBanners(village.id, "announcement"),
-      listBanners(village.id, "emergency"),
-      getVisitorCount(village.id),
-    ]);
+  const [
+    primaryNav,
+    footerNav,
+    socials,
+    runningBanners,
+    emergency,
+    visitors,
+    settings,
+  ] = await Promise.all([
+    getMenu(village.id, "primary"),
+    getMenu(village.id, "footer"),
+    listSocialLinks(village.id),
+    listBanners(village.id, "announcement"),
+    listBanners(village.id, "emergency"),
+    getVisitorCount(village.id),
+    getVillageSettings(village.id, "contact."),
+  ]);
+
+  const officeHours = settings["contact.office_hours"] ?? null;
 
   const runningText = runningBanners
     .map((banner) => banner.title)
@@ -57,6 +67,7 @@ export async function SiteShell({ children }: { children: ReactNode }) {
         nav={primaryNav}
         runningText={runningText}
         emergency={emergency}
+        officeHours={officeHours}
       />
 
       <main id="konten" className="flex-1">
@@ -70,6 +81,7 @@ export async function SiteShell({ children }: { children: ReactNode }) {
         nav={footerNav.length > 0 ? footerNav : primaryNav}
         socials={socials}
         visitorCount={visitors}
+        officeHours={officeHours}
       />
     </div>
   );

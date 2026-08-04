@@ -110,7 +110,7 @@ export default async function AdminLoginPage({
   const village = await requireVillage();
 
   return (
-    <div className="grid min-h-screen place-items-center bg-[var(--surface-muted)] px-4">
+    <div className="grid min-h-screen place-items-center bg-[var(--surface-1)] px-4">
       <div className="w-full max-w-sm rounded-xl border border-[var(--border)] bg-[var(--surface)] p-7">
         <h1 className="text-xl font-bold">Panel Admin</h1>
         <p className="mt-1 text-sm text-[var(--text-muted)]">

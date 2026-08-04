@@ -110,7 +110,7 @@ export default async function AdminComplaintsPage() {
               className="rounded-xl border border-[var(--border)] p-5"
             >
               <div className="flex flex-wrap items-center gap-3">
-                <code className="rounded bg-[var(--surface-muted)] px-2 py-0.5 text-xs">
+                <code className="rounded bg-[var(--surface-1)] px-2 py-0.5 text-xs">
                   {complaint.ticket}
                 </code>
                 <span className="text-sm font-semibold">{complaint.subject}</span>

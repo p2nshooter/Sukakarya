@@ -52,7 +52,7 @@ export default async function AdminLayout({
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <aside className="border-b border-[var(--border)] bg-[var(--surface-muted)] lg:w-64 lg:shrink-0 lg:border-b-0 lg:border-r">
+      <aside className="border-b border-[var(--border)] bg-[var(--surface-1)] lg:w-64 lg:shrink-0 lg:border-b-0 lg:border-r">
         <div className="p-5">
           <p className="text-xs uppercase tracking-wide text-[var(--text-muted)]">
             Panel Admin

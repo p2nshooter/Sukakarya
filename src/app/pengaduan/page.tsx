@@ -133,7 +133,7 @@ export default async function ComplaintPage({
             </p>
             <p className="mt-2 text-sm">
               Nomor tiket:{" "}
-              <code className="rounded bg-[var(--surface-muted)] px-2 py-1 font-mono text-base">
+              <code className="rounded bg-[var(--surface-1)] px-2 py-1 font-mono text-base">
                 {params.ticket}
               </code>
             </p>
