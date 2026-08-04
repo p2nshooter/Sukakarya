@@ -1,0 +1,111 @@
+name: Smoke test
+
+# Hits the deployed Worker over real HTTP and asserts on status codes and
+# response bodies. "wrangler uploaded it" is not the same as "the site works",
+# and the difference has bitten this project before.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Base URL to test"
+        required: false
+        default: "https://app-desa.app-desa.workers.dev"
+        type: string
+  workflow_run:
+    workflows: ["Deploy"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Probe the live Worker
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE: ${{ inputs.base_url || 'https://app-desa.app-desa.workers.dev' }}
+
+    steps:
+      - name: Probe public routes
+        run: |
+          set -uo pipefail
+          failures=0
+
+          {
+            echo "### Smoke test"
+            echo ""
+            echo "Base: \`${BASE}\`"
+            echo ""
+            echo "| Check | Expected | Got | |"
+            echo "|---|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # A Worker that has just been uploaded can take a few seconds before
+          # the route resolves, so give the first request room to settle.
+          for attempt in 1 2 3 4 5 6; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "${BASE}/" || echo 000)
+            [ "$code" != "000" ] && break
+            echo "Route not resolving yet (attempt ${attempt}), waiting..."
+            sleep 10
+          done
+
+          check() {
+            label="$1"; path="$2"; want="$3"
+            got=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${BASE}${path}" || echo 000)
+            if [ "$got" = "$want" ]; then mark="✅"; else mark="❌"; failures=$((failures+1)); fi
+            echo "| ${label} \`${path}\` | ${want} | ${got} | ${mark} |" >> "$GITHUB_STEP_SUMMARY"
+          }
+
+          contains() {
+            label="$1"; path="$2"; needle="$3"
+            if curl -sS --max-time 30 "${BASE}${path}" | grep -qF "$needle"; then
+              mark="✅"; got="found"
+            else
+              mark="❌"; got="missing"; failures=$((failures+1))
+            fi
+            echo "| ${label} | \`${needle}\` | ${got} | ${mark} |" >> "$GITHUB_STEP_SUMMARY"
+          }
+
+          check "Homepage"       "/"                200
+          check "Admin login"    "/admin/login"     200
+          check "Sitemap"        "/sitemap.xml"     200
+          check "Robots"         "/robots.txt"      200
+          check "Unknown page"   "/tidak-ada-nya"   404
+
+          # The admin panel must not be reachable without a session. A redirect
+          # to the login page is the pass condition; a 200 would mean the gate
+          # is open.
+          admin=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${BASE}/admin")
+          if [ "$admin" = "307" ] || [ "$admin" = "302" ] || [ "$admin" = "308" ]; then
+            mark="✅"
+          else
+            mark="❌"; failures=$((failures+1))
+          fi
+          echo "| Admin panel is gated \`/admin\` | 30x | ${admin} | ${mark} |" >> "$GITHUB_STEP_SUMMARY"
+
+          contains "robots.txt disallows /admin" "/robots.txt" "Disallow: /admin"
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$failures" -ne 0 ]; then
+            echo "**${failures} check(s) failed.**" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::${failures} smoke check(s) failed against ${BASE}"
+            exit 1
+          fi
+          echo "**All checks passed.**" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show what the homepage actually returned
+        if: always()
+        run: |
+          {
+            echo ""
+            echo "<details><summary>Response headers</summary>"
+            echo ""
+            echo '```'
+            curl -sS -D - -o /dev/null --max-time 30 "${BASE}/" || true
+            echo '```'
+            echo ""
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
