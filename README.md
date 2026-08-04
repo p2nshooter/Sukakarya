@@ -111,6 +111,43 @@ Sign in at `/admin/login`.
 
 ---
 
+## Deployment
+
+Live at **https://app-desa.app-desa.workers.dev**.
+
+Four workflows, each doing one job:
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `ci.yml` | push, PR | Audit, catalogue check, typecheck, tests, build, migrations on a throwaway database. No credentials. |
+| `deploy.yml` | push to `main`, manual | Migrations, module catalogue sync, build, deploy. |
+| `smoke.yml` | after a successful deploy, manual | Probes the live URL over HTTP and asserts on what comes back. |
+| `bootstrap.yml` | manual | One-off: create D1/KV/R2, and optionally apply the baseline seed. |
+| `workers-subdomain.yml` | manual | One-off: claim the account's `*.workers.dev` subdomain. |
+| `create-admin.yml` | manual | Creates the first administrator on the remote database. |
+
+### Order for a fresh account
+
+1. `bootstrap.yml` — creates D1, KV and R2; copy the printed ids into
+   `wrangler.jsonc`.
+2. `workers-subdomain.yml` — claims a `*.workers.dev` name. Nothing can be
+   published until an account has one, and wrangler only offers to claim it
+   interactively, so it can never happen inside a deploy.
+3. `bootstrap.yml` again with `seed_baseline` — applies roles, permissions and
+   the demo tenant. **Without a `villages` row every page returns 5xx**, since
+   `requireVillage()` throws on an unresolved tenant.
+4. `deploy.yml`.
+5. `create-admin.yml` — needs an `ADMIN_PASSWORD` repository secret (12+
+   characters). The password is hashed on the runner and only the hash reaches
+   the database; it is never a workflow input, because dispatch inputs are
+   recorded unmasked in the run.
+
+The baseline seed is deliberately **not** part of the deploy: its upserts would
+reset the tenant's name, colours, menus and sections on every push, silently
+undoing an operator's configuration.
+
+---
+
 ## Cloudflare resources
 
 Declared in `wrangler.jsonc`; all four already exist in the account:
@@ -233,6 +270,18 @@ tests/                vitest unit suite
 ---
 
 ## Verified
+
+Against the deployed Worker at `app-desa.app-desa.workers.dev`, by `smoke.yml`:
+
+```
+✅ Homepage /                    want 200, got 200
+✅ Admin login /admin/login      want 200, got 200
+✅ Sitemap /sitemap.xml          want 200, got 200
+✅ Robots /robots.txt            want 200, got 200
+✅ Unknown page /tidak-ada-nya   want 404, got 404
+✅ Admin panel is gated /admin   want 30x, got 307
+✅ robots.txt disallows /admin   'Disallow: /admin' found
+```
 
 Against real bindings on the Worker runtime:
 
