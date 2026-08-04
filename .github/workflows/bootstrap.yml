@@ -9,6 +9,11 @@ name: Bootstrap Cloudflare resources
 
 on:
   workflow_dispatch:
+    inputs:
+      seed_baseline:
+        description: "Also apply db/seed/seed.sql (roles, permissions, demo tenant). Re-running resets the demo tenant's branding, menus and sections."
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -66,4 +71,24 @@ jobs:
           echo "## R2" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           npx wrangler r2 bucket create app-desa-media 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      # The deploy applies migrations and the module catalogue, but never this
+      # file. Without it the database has a schema and 300 modules and no
+      # `villages` row at all, so `requireVillage()` throws and every page 500s.
+      #
+      # It lives here rather than in the deploy because its upserts would
+      # otherwise reset the demo tenant's name, colours, menus and sections on
+      # every push, silently undoing an operator's work.
+      - name: Apply baseline seed (roles, permissions, demo tenant)
+        if: inputs.seed_baseline
+        run: |
+          echo "## Baseline seed" >> "$GITHUB_STEP_SUMMARY"
+          npx wrangler d1 migrations apply app-desa-db --remote
+          npx wrangler d1 execute app-desa-db --remote --file=./db/seed/modules.sql
+          npx wrangler d1 execute app-desa-db --remote --file=./db/seed/seed.sql
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          npx wrangler d1 execute app-desa-db --remote --json \
+            --command "SELECT (SELECT count(*) FROM villages) AS villages, (SELECT count(*) FROM modules) AS modules, (SELECT count(*) FROM roles) AS roles, (SELECT count(*) FROM page_sections) AS sections" \
+            2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"

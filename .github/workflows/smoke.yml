@@ -52,11 +52,22 @@ jobs:
             sleep 10
           done
 
+          # Every result goes to stdout as well as the summary. A red run whose
+          # numbers live only in the summary is a run you have to click into to
+          # learn anything from.
           check() {
             label="$1"; path="$2"; want="$3"
             got=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${BASE}${path}" || echo 000)
             if [ "$got" = "$want" ]; then mark="✅"; else mark="❌"; failures=$((failures+1)); fi
+            echo "${mark} ${label} ${path} - want ${want}, got ${got}"
             echo "| ${label} \`${path}\` | ${want} | ${got} | ${mark} |" >> "$GITHUB_STEP_SUMMARY"
+            # A 5xx carries the reason in the body; print it once so the cause
+            # is in the log instead of requiring a second manual request.
+            if [ "$got" != "$want" ] && [ "${got#5}" != "$got" ]; then
+              echo "--- body of ${path} (first 40 lines) ---"
+              curl -sS --max-time 30 "${BASE}${path}" | head -40 || true
+              echo "--- end ---"
+            fi
           }
 
           contains() {
@@ -66,6 +77,7 @@ jobs:
             else
               mark="❌"; got="missing"; failures=$((failures+1))
             fi
+            echo "${mark} ${label} - '${needle}' ${got}"
             echo "| ${label} | \`${needle}\` | ${got} | ${mark} |" >> "$GITHUB_STEP_SUMMARY"
           }
 
@@ -84,6 +96,7 @@ jobs:
           else
             mark="❌"; failures=$((failures+1))
           fi
+          echo "${mark} Admin panel is gated /admin - want 30x, got ${admin}"
           echo "| Admin panel is gated \`/admin\` | 30x | ${admin} | ${mark} |" >> "$GITHUB_STEP_SUMMARY"
 
           contains "robots.txt disallows /admin" "/robots.txt" "Disallow: /admin"
