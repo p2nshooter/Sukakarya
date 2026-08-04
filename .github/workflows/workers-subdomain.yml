@@ -1,0 +1,82 @@
+name: Register workers.dev subdomain
+
+# One-off, account-wide setup. A Cloudflare account has no *.workers.dev
+# subdomain until someone claims one, and `wrangler deploy` refuses to publish
+# without it:
+#
+#   You need to register a workers.dev subdomain before publishing to workers.dev
+#
+# Wrangler only offers to claim it interactively, so it can never happen inside
+# a CI run. This workflow does it over the API instead.
+#
+# The name is global across all of Cloudflare and applies to every Worker in
+# the account, so it is an input rather than a constant. Changing it later
+# breaks any URL already handed out.
+
+on:
+  workflow_dispatch:
+    inputs:
+      subdomain:
+        description: "Name to claim under workers.dev (globally unique, account-wide)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  subdomain:
+    name: Claim the account subdomain
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      SUBDOMAIN: ${{ inputs.subdomain }}
+
+    steps:
+      - name: Claim it, then report what the account ends up with
+        run: |
+          set -uo pipefail
+          endpoint="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/subdomain"
+
+          # Bearer token stays in the header, never on the command line of a
+          # logged step and never in the summary.
+          call() {
+            curl -sS -X "$1" "$endpoint" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              ${2:+--data "$2"}
+          }
+
+          before=$(call GET)
+          current=$(printf '%s' "$before" | jq -r '.result.subdomain // empty')
+
+          if [ -n "$current" ]; then
+            echo "Account already has a subdomain: ${current}"
+          else
+            echo "No subdomain registered yet - claiming '${SUBDOMAIN}'"
+            result=$(call PUT "$(jq -nc --arg s "$SUBDOMAIN" '{subdomain:$s}')")
+            if [ "$(printf '%s' "$result" | jq -r '.success')" != "true" ]; then
+              echo "::error::Cloudflare rejected the subdomain. It is probably already taken by another account, or the API token lacks 'Workers Scripts: Edit'."
+              printf '%s' "$result" | jq -r '.errors[]? | "  [\(.code)] \(.message)"'
+              exit 1
+            fi
+          fi
+
+          after=$(call GET)
+          final=$(printf '%s' "$after" | jq -r '.result.subdomain // empty')
+          if [ -z "$final" ]; then
+            echo "::error::The account still reports no workers.dev subdomain."
+            exit 1
+          fi
+
+          {
+            echo "### workers.dev subdomain"
+            echo ""
+            echo "Registered: \`${final}\`"
+            echo ""
+            echo "The Worker will be reachable at:"
+            echo ""
+            echo "    https://app-desa.${final}.workers.dev"
+          } >> "$GITHUB_STEP_SUMMARY"
