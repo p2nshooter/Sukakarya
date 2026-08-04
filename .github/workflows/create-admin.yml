@@ -1,0 +1,132 @@
+name: Create administrator account
+
+# Creates the first administrator on the remote database so /admin/login is
+# usable. The password never travels through this workflow in the clear and
+# never appears in a log:
+#
+#   - it is read from the ADMIN_PASSWORD repository secret, so Actions masks it
+#   - scripts/create-admin.mjs hashes it locally (PBKDF2-SHA256, 210k rounds)
+#     and emits only the hash
+#   - the generated SQL goes to a temp file outside the checkout, and is
+#     deleted before the job ends
+#
+# This repository is public, so a password must never be a workflow_dispatch
+# input - dispatch inputs are recorded in the run and are not masked.
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Administrator email (used to sign in)"
+        required: true
+        type: string
+      name:
+        description: "Display name"
+        required: false
+        default: "Administrator"
+        type: string
+      village:
+        description: "Village id to attach the account to"
+        required: false
+        default: "vil_demo"
+        type: string
+      role:
+        description: "Role"
+        required: false
+        default: "admin"
+        type: choice
+        options: [admin, super_admin, kepala_desa, sekretaris_desa, operator]
+
+permissions:
+  contents: read
+
+jobs:
+  create-admin:
+    name: Create the account
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The email is interpolated into a SQL string in the confirmation step, so
+      # it is checked against a strict pattern here rather than trusted.
+      - name: Validate inputs
+        env:
+          EMAIL: ${{ inputs.email }}
+          VILLAGE: ${{ inputs.village }}
+        run: |
+          case "$EMAIL" in
+            *[!a-zA-Z0-9.@_+-]* | "" | *"'"* )
+              echo "::error::Email contains characters outside [a-zA-Z0-9.@_+-]."
+              exit 1 ;;
+          esac
+          case "$VILLAGE" in
+            *[!a-zA-Z0-9_-]* | "" )
+              echo "::error::Village id contains characters outside [a-zA-Z0-9_-]."
+              exit 1 ;;
+          esac
+
+      - name: Check ADMIN_PASSWORD is set
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: |
+          if [ -z "${ADMIN_PASSWORD}" ]; then
+            echo "::error::Repository secret ADMIN_PASSWORD is not set. Add it under Settings > Secrets and variables > Actions, then re-run. It must be at least 12 characters."
+            exit 1
+          fi
+          if [ "${#ADMIN_PASSWORD}" -lt 12 ]; then
+            echo "::error::ADMIN_PASSWORD is shorter than the 12-character minimum."
+            exit 1
+          fi
+
+      - name: Hash the password and apply the account
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          EMAIL: ${{ inputs.email }}
+          FULL_NAME: ${{ inputs.name }}
+          VILLAGE: ${{ inputs.village }}
+          ROLE: ${{ inputs.role }}
+        run: |
+          set -euo pipefail
+          sql="$(mktemp -t admin-XXXXXX.sql)"
+          trap 'rm -f "$sql"' EXIT
+
+          node scripts/create-admin.mjs \
+            --email "$EMAIL" --name "$FULL_NAME" \
+            --village "$VILLAGE" --role "$ROLE" > "$sql"
+
+          npx wrangler d1 execute app-desa-db --remote --file="$sql"
+
+      - name: Confirm the account exists
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          EMAIL: ${{ inputs.email }}
+        run: |
+          # Reads back identifying columns only. Never selects password_hash or
+          # salt, so no credential material can reach the log.
+          npx wrangler d1 execute app-desa-db --remote \
+            --command "SELECT email, full_name, village_id, status FROM users WHERE email = '${EMAIL}'" \
+            | tee /tmp/check.txt
+
+          {
+            echo "### Administrator"
+            echo ""
+            echo "Sign in at \`/admin/login\` with \`${EMAIL}\` and the password stored in the ADMIN_PASSWORD secret."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          grep -qF "$EMAIL" /tmp/check.txt || {
+            echo "::error::The account was not found after applying the SQL."
+            exit 1
+          }
