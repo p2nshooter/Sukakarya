@@ -114,7 +114,7 @@ export default async function TourismDetailPage({
           { label: "Wisata", href: "/wisata" },
           { label: item.name, href: `/wisata/${item.slug}` },
         ]}
-        action={<Badge tone="onDark">{item.kind}</Badge>}
+        action={<Badge>{item.kind}</Badge>}
       />
 
       <Container className="py-12">

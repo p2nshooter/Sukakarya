@@ -354,3 +354,18 @@ VALUES
    '[{"name":"tempat_lahir","label":"Tempat Lahir","type":"text","required":true},{"name":"tanggal_lahir","label":"Tanggal Lahir","type":"date","required":true},{"name":"jenis_kelamin","label":"Jenis Kelamin","type":"select","required":true,"options":["Laki-laki","Perempuan"]}]',
    3, 1, 0, 1, 'published', 50)
 ON CONFLICT (id) DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Brand colours
+--
+-- seed.sql now ships a deeper jade and a warmer accent, but it uses ON CONFLICT
+-- DO NOTHING on the villages row, so a database seeded before that change keeps
+-- the old flat green. Scoped to the demo tenant by id.
+-- ---------------------------------------------------------------------------
+
+UPDATE villages
+SET primary_color = '#0d6b52',
+    secondary_color = '#084a39',
+    accent_color = '#b98a2e',
+    updated_at = datetime('now')
+WHERE id = 'vil_demo';

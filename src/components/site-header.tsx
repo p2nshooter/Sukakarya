@@ -81,18 +81,18 @@ export function SiteHeader({
         {/* Utility strip: the details a citizen looks for before anything else -
             where the office is, when it is open, how to reach it. Desktop only;
             on a phone these live in the footer instead of eating the viewport. */}
-        <div className="hidden bg-brand-800 text-white/80 lg:block">
+        <div className="hidden border-b border-[var(--border)] bg-[var(--surface-1)] text-[var(--text-muted)] lg:block">
           <Container className="flex items-center justify-between gap-6 py-2 text-xs">
             <div className="flex min-w-0 items-center gap-5">
               {village.address ? (
                 <span className="flex min-w-0 items-center gap-1.5">
-                  <IconPin className="h-3.5 w-3.5 shrink-0" />
+                  <IconPin className="h-3.5 w-3.5 shrink-0 text-brand" />
                   <span className="truncate">{village.address}</span>
                 </span>
               ) : null}
               {officeHours ? (
                 <span className="flex shrink-0 items-center gap-1.5">
-                  <IconClock className="h-3.5 w-3.5" />
+                  <IconClock className="h-3.5 w-3.5 text-brand" />
                   {officeHours}
                 </span>
               ) : null}
@@ -102,18 +102,18 @@ export function SiteHeader({
               {village.phone ? (
                 <a
                   href={`tel:${village.phone.replace(/\s/g, "")}`}
-                  className="flex items-center gap-1.5 transition-colors hover:text-white"
+                  className="flex items-center gap-1.5 transition-colors hover:text-[var(--text)]"
                 >
-                  <IconPhone className="h-3.5 w-3.5" />
+                  <IconPhone className="h-3.5 w-3.5 text-brand" />
                   {village.phone}
                 </a>
               ) : null}
               {show("email") && village.email ? (
                 <a
                   href={`mailto:${village.email}`}
-                  className="flex items-center gap-1.5 transition-colors hover:text-white"
+                  className="flex items-center gap-1.5 transition-colors hover:text-[var(--text)]"
                 >
-                  <IconMail className="h-3.5 w-3.5" />
+                  <IconMail className="h-3.5 w-3.5 text-brand" />
                   {village.email}
                 </a>
               ) : null}

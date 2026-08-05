@@ -100,77 +100,86 @@ export async function HeroBanner({ village, section }: SectionProps) {
     `Selamat Datang di ${village.entityLabel} ${village.name}`;
 
   return (
-    <section className="brand-mesh relative isolate overflow-hidden">
-      {cover ? (
-        <>
-          <img
-            src={cover}
-            alt=""
-            className="absolute inset-0 -z-10 h-full w-full object-cover"
-            fetchPriority="high"
-          />
-          {/* Two layers: a flat wash that guarantees contrast on any photograph,
-              and a directional gradient so the left column, where the text
-              sits, is the darkest part of the frame. */}
+    <>
+      <section
+        className={`brand-mesh grain relative isolate overflow-hidden ${
+          rest.length > 0 ? "" : "border-b border-[var(--border)]"
+        }`}
+      >
+        <Container className="relative">
+          {/* Split rather than an overlay. Laying text over a photograph means
+              guessing at a scrim strong enough for every image a village might
+              upload; giving the words their own column means the headline is
+              always near-black on ivory and the picture is never darkened.
+
+              With no cover image the second column would leave a large void, so
+              the grid collapses to one column and the copy gets more room. */}
           <div
-            aria-hidden
-            className="absolute inset-0 -z-10 bg-brand-900/70"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 -z-10 bg-gradient-to-r from-black/65 via-black/35 to-transparent"
-          />
-        </>
-      ) : null}
+            className={`grid items-center gap-12 py-16 sm:py-20 lg:gap-16 lg:py-24 ${
+              cover ? "lg:grid-cols-[1.05fr_1fr]" : ""
+            }`}
+          >
+            <div className={cover ? "max-w-2xl" : "max-w-3xl"}>
+              {region ? (
+                <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[var(--surface)]/70 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] backdrop-blur-sm">
+                  <IconPin className="h-3.5 w-3.5 text-brand" />
+                  {region}
+                </p>
+              ) : null}
 
-      <Container className="relative py-20 sm:py-28 lg:py-32">
-        <div className="max-w-3xl text-white">
-          {region ? (
-            <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/12 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider ring-1 ring-inset ring-white/20 backdrop-blur-sm">
-              <IconPin className="h-3.5 w-3.5" />
-              {region}
-            </p>
-          ) : null}
+              <h1 className="text-[length:var(--text-display)] font-extrabold leading-[1.03] tracking-[-0.03em]">
+                {heading}
+              </h1>
 
-          <h1 className="text-[length:var(--text-display)] font-bold leading-[1.05] tracking-tight">
-            {heading}
-          </h1>
+              {primary?.subtitle || section.subtitle ? (
+                <p className="mt-6 max-w-xl text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
+                  {primary?.subtitle ?? section.subtitle}
+                </p>
+              ) : null}
 
-          {primary?.subtitle || section.subtitle ? (
-            <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg">
-              {primary?.subtitle ?? section.subtitle}
-            </p>
-          ) : null}
+              <div className="mt-9 flex flex-wrap gap-3">
+                {primary?.linkUrl ? (
+                  <ButtonLink href={primary.linkUrl} size="lg">
+                    {primary.linkLabel ?? "Selengkapnya"}
+                    <IconArrowRight className="h-4 w-4" />
+                  </ButtonLink>
+                ) : (
+                  <ButtonLink href="/layanan" size="lg">
+                    Ajukan Surat Online
+                    <IconArrowRight className="h-4 w-4" />
+                  </ButtonLink>
+                )}
+                <ButtonLink href="/berita" size="lg" variant="secondary">
+                  Berita Terbaru
+                </ButtonLink>
+              </div>
+            </div>
 
-          <div className="mt-9 flex flex-wrap gap-3">
-            {primary?.linkUrl ? (
-              <ButtonLink href={primary.linkUrl} variant="onDark" size="lg">
-                {primary.linkLabel ?? "Selengkapnya"}
-                <IconArrowRight className="h-4 w-4" />
-              </ButtonLink>
-            ) : (
-              <ButtonLink href="/layanan" variant="onDark" size="lg">
-                Ajukan Surat Online
-                <IconArrowRight className="h-4 w-4" />
-              </ButtonLink>
-            )}
-            <ButtonLink
-              href="/berita"
-              size="lg"
-              variant="ghost"
-              className="border border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
-            >
-              Berita Terbaru
-            </ButtonLink>
+            {cover ? (
+              <div className="relative">
+                <div
+                  aria-hidden
+                  className="absolute -bottom-5 -right-5 hidden h-full w-full rounded-[var(--radius-card)] bg-brand/10 lg:block"
+                />
+                <img
+                  src={cover}
+                  alt=""
+                  fetchPriority="high"
+                  className="relative aspect-[4/3] w-full rounded-[var(--radius-card)] object-cover shadow-[var(--shadow-xl)]"
+                />
+              </div>
+            ) : null}
           </div>
-        </div>
-      </Container>
+        </Container>
+      </section>
 
-      {/* Secondary hero banners become a highlight strip that overlaps the
-          section boundary, so the fold has depth instead of a hard edge. */}
+      {/* Secondary hero banners become a highlight strip that overlaps the hero
+          boundary, so the fold has depth instead of a hard edge. It sits
+          outside the section because the hero clips its own overflow, which
+          would slice the top off these cards. */}
       {rest.length > 0 ? (
-        <Container className="relative -mb-8 translate-y-8">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Container className="relative z-10 -mt-10 pb-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {rest.slice(0, 3).map((banner) => (
               <div
                 key={banner.id}
@@ -198,7 +207,7 @@ export async function HeroBanner({ village, section }: SectionProps) {
           </div>
         </Container>
       ) : null}
-    </section>
+    </>
   );
 }
 
@@ -1238,20 +1247,21 @@ export async function KontakSection({ village, section }: SectionProps) {
           })}
         </div>
 
-        <div className="brand-mesh flex flex-col justify-center rounded-[var(--radius-card)] p-7 text-white shadow-[var(--shadow-lg)] lg:w-80">
-          <IconChat className="h-8 w-8" />
-          <p className="mt-4 font-display text-lg font-bold leading-snug">
+        <div className="brand-mesh flex flex-col justify-center rounded-[var(--radius-card)] border border-[var(--border-strong)] p-7 shadow-[var(--shadow-md)] lg:w-80">
+          <span
+            aria-hidden
+            className="grid h-11 w-11 place-items-center rounded-xl bg-brand text-[var(--text-on-brand)] shadow-[var(--shadow-brand)]"
+          >
+            <IconChat className="h-5 w-5" />
+          </span>
+          <p className="mt-5 font-display text-lg font-bold leading-snug">
             Ada keluhan atau masukan?
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-white/80">
+          <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
             Sampaikan melalui kanal pengaduan resmi. Setiap laporan mendapat
             nomor tiket untuk dipantau.
           </p>
-          <ButtonLink
-            href="/pengaduan"
-            variant="onDark"
-            className="mt-6 self-start"
-          >
+          <ButtonLink href="/pengaduan" className="mt-6 self-start">
             Kirim Pengaduan
             <IconArrowRight className="h-4 w-4" />
           </ButtonLink>

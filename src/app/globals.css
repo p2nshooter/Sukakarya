@@ -14,9 +14,13 @@
    ========================================================================== */
 
 @theme {
-  --color-brand: var(--village-primary, #0f6b3f);
-  --color-brand-dark: var(--village-secondary, #0a4b2c);
-  --color-brand-accent: var(--village-accent, #c8952a);
+  /* Deep jade with an antique-gold accent. Green reads as the conventional
+     colour for Indonesian village government, but the flat mid-greens usually
+     reached for turn muddy against warm paper; pushing it deeper and slightly
+     blue keeps it calm at large sizes and legible as small text on ivory. */
+  --color-brand: var(--village-primary, #0d6b52);
+  --color-brand-dark: var(--village-secondary, #084a39);
+  --color-brand-accent: var(--village-accent, #b98a2e);
 
   --color-brand-50: color-mix(in oklab, var(--color-brand) 6%, white);
   --color-brand-100: color-mix(in oklab, var(--color-brand) 12%, white);
@@ -29,10 +33,13 @@
   --color-brand-800: color-mix(in oklab, var(--color-brand) 52%, black);
   --color-brand-900: color-mix(in oklab, var(--color-brand) 38%, black);
 
-  --font-display: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui,
-    -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* The -loaded variables are injected by next/font on <html>. Naming them
+     separately means a missing font falls through to the system stack instead
+     of resolving to nothing. */
+  --font-display: var(--font-display-loaded), "Plus Jakarta Sans", ui-sans-serif,
+    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-sans-loaded), "Inter", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* Fluid type scale. Headings shrink on phones without a media query and
      without ever dropping below a readable size. */
@@ -53,31 +60,34 @@
    -------------------------------------------------------------------------- */
 
 :root {
-  /* Not pure white. A hair of warmth stops large surfaces reading as clinical
-     and keeps photography from looking blown out against the page. */
-  --surface: #fdfdfc;
-  --surface-1: #f7f7f5;
-  --surface-2: #f0f0ed;
-  --surface-3: #e7e7e3;
-  --surface-inverse: #14171a;
+  /* Warm ivory rather than white or cool grey. Paper, not screen: it flatters
+     photography, softens large empty areas, and reads as considered where a
+     pure #fff reads as unstyled. */
+  --surface: #fefdfb;
+  --surface-1: #f9f7f3;
+  --surface-2: #f2efe8;
+  --surface-3: #e9e5db;
+  --surface-inverse: #1a1815;
 
-  --border: #e5e5e0;
-  --border-strong: #d2d2cb;
+  --border: #e8e3d9;
+  --border-strong: #d6cfc1;
 
-  --text: #14171a;
-  --text-muted: #5c6570;
-  --text-subtle: #8a929c;
+  /* Warm near-black. Pure #000 on ivory produces a harsh edge. */
+  --text: #1a1815;
+  --text-muted: #6b645b;
+  --text-subtle: #9c948a;
   --text-on-brand: #ffffff;
 
   /* Layered shadows: a tight contact shadow plus a wide ambient one. A single
-     large blur reads as a smudge; two reads as depth. */
-  --shadow-sm: 0 1px 2px rgb(20 23 26 / 0.05), 0 1px 1px rgb(20 23 26 / 0.03);
-  --shadow-md: 0 2px 4px rgb(20 23 26 / 0.05), 0 6px 16px -4px rgb(20 23 26 / 0.08);
-  --shadow-lg: 0 4px 8px rgb(20 23 26 / 0.05), 0 16px 32px -8px rgb(20 23 26 / 0.12);
-  --shadow-xl: 0 8px 16px rgb(20 23 26 / 0.06), 0 32px 64px -16px rgb(20 23 26 / 0.18);
-  --shadow-brand: 0 8px 24px -8px color-mix(in oklab, var(--color-brand) 45%, transparent);
+     large blur reads as a smudge; two reads as depth. Warm-tinted, because a
+     neutral grey shadow over an ivory surface turns visibly blue at the edges. */
+  --shadow-sm: 0 1px 2px rgb(60 48 30 / 0.05), 0 1px 1px rgb(60 48 30 / 0.03);
+  --shadow-md: 0 2px 4px rgb(60 48 30 / 0.05), 0 6px 16px -4px rgb(60 48 30 / 0.07);
+  --shadow-lg: 0 4px 8px rgb(60 48 30 / 0.05), 0 16px 32px -8px rgb(60 48 30 / 0.10);
+  --shadow-xl: 0 8px 16px rgb(60 48 30 / 0.06), 0 32px 64px -16px rgb(60 48 30 / 0.14);
+  --shadow-brand: 0 8px 24px -10px color-mix(in oklab, var(--color-brand) 50%, transparent);
 
-  --scrim: rgb(20 23 26 / 0.55);
+  --scrim: rgb(26 24 21 / 0.45);
   color-scheme: light;
 }
 
@@ -90,18 +100,18 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --surface: #0b0d0f;
-    --surface-1: #131619;
-    --surface-2: #1a1e22;
-    --surface-3: #232830;
-    --surface-inverse: #f7f7f5;
+    --surface: #0c0d0c;
+    --surface-1: #141613;
+    --surface-2: #1c1f1b;
+    --surface-3: #262a24;
+    --surface-inverse: #f9f7f3;
 
-    --border: #262b31;
-    --border-strong: #363d45;
+    --border: #292d26;
+    --border-strong: #3a3f36;
 
-    --text: #eceef1;
-    --text-muted: #9aa3ae;
-    --text-subtle: #6e7783;
+    --text: #f0ede7;
+    --text-muted: #a49d92;
+    --text-subtle: #777066;
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-md: 0 2px 4px rgb(0 0 0 / 0.4), 0 6px 16px -4px rgb(0 0 0 / 0.5);
@@ -114,18 +124,18 @@
 }
 
 :root[data-theme="dark"] {
-  --surface: #0b0d0f;
-  --surface-1: #131619;
-  --surface-2: #1a1e22;
-  --surface-3: #232830;
-  --surface-inverse: #f7f7f5;
+  --surface: #0c0d0c;
+  --surface-1: #141613;
+  --surface-2: #1c1f1b;
+  --surface-3: #262a24;
+  --surface-inverse: #f9f7f3;
 
-  --border: #262b31;
-  --border-strong: #363d45;
+  --border: #292d26;
+  --border-strong: #3a3f36;
 
-  --text: #eceef1;
-  --text-muted: #9aa3ae;
-  --text-subtle: #6e7783;
+  --text: #f0ede7;
+  --text-muted: #a49d92;
+  --text-subtle: #777066;
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-md: 0 2px 4px rgb(0 0 0 / 0.4), 0 6px 16px -4px rgb(0 0 0 / 0.5);
@@ -251,26 +261,76 @@ p {
   );
 }
 
-/* Ambient brand wash behind hero and feature blocks. Two offset radial stops
-   read as light falling across the panel rather than as a flat gradient. */
+/* Ambient brand wash behind hero and feature blocks.
+
+   Light, not dark. A dark slab across the top of every landing page makes a
+   civic site feel heavy and dates quickly; a pale wash of the tenant's own
+   colour over ivory reads as considered and lets the text stay near-black,
+   which is both calmer and easier to keep accessible. Three offset radial
+   stops read as light falling across the panel rather than a flat gradient. */
 .brand-mesh {
-  background-color: var(--color-brand-800);
+  background-color: var(--surface-1);
   background-image:
     radial-gradient(
-      ellipse 80% 60% at 15% 0%,
-      color-mix(in oklab, var(--color-brand) 85%, transparent),
-      transparent 60%
+      ellipse 75% 60% at 8% -10%,
+      color-mix(in oklab, var(--color-brand) 16%, transparent),
+      transparent 62%
     ),
     radial-gradient(
-      ellipse 70% 70% at 95% 20%,
-      color-mix(in oklab, var(--color-brand-accent) 45%, transparent),
-      transparent 55%
+      ellipse 60% 65% at 96% 6%,
+      color-mix(in oklab, var(--color-brand-accent) 15%, transparent),
+      transparent 58%
     ),
     radial-gradient(
-      ellipse 100% 80% at 50% 110%,
-      color-mix(in oklab, var(--color-brand-900) 90%, transparent),
-      transparent 65%
+      ellipse 95% 75% at 55% 112%,
+      color-mix(in oklab, var(--color-brand) 9%, transparent),
+      transparent 66%
     );
+}
+
+/* In dark mode the same panel has to lift off the page instead of washing it,
+   so the stops get stronger and the base moves up a surface level. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand-mesh {
+    background-color: var(--surface-1);
+    background-image:
+      radial-gradient(
+        ellipse 75% 60% at 8% -10%,
+        color-mix(in oklab, var(--color-brand) 30%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        ellipse 60% 65% at 96% 6%,
+        color-mix(in oklab, var(--color-brand-accent) 18%, transparent),
+        transparent 58%
+      );
+  }
+}
+
+:root[data-theme="dark"] .brand-mesh {
+  background-color: var(--surface-1);
+  background-image:
+    radial-gradient(
+      ellipse 75% 60% at 8% -10%,
+      color-mix(in oklab, var(--color-brand) 30%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 60% 65% at 96% 6%,
+      color-mix(in oklab, var(--color-brand-accent) 18%, transparent),
+      transparent 58%
+    );
+}
+
+/* Fine grain over the hero. At 2% opacity it is invisible as texture but stops
+   a large flat gradient from banding on 8-bit displays. */
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Placeholder for records with no cover image. A tinted diagonal beats a grey

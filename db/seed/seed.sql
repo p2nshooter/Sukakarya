@@ -77,7 +77,7 @@ INSERT INTO villages (
   'Indonesia', -6.2500, 107.1500, 14,
   'Jalan Raya Desa No. 1', '(021) 0000000', '628000000000',
   'admin@example.test',
-  '#15803d', '#166534', '#f59e0b', 'id', 'Asia/Jakarta', 'active'
+  '#0d6b52', '#084a39', '#b98a2e', 'id', 'Asia/Jakarta', 'active'
 )
 ON CONFLICT (id) DO UPDATE SET
   name = excluded.name, updated_at = datetime('now');
