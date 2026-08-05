@@ -423,20 +423,14 @@ export function Thumb({
 
 export function Breadcrumb({
   items,
-  onDark = false,
 }: {
   items: { label: string; href: string }[];
-  onDark?: boolean;
 }) {
   if (items.length === 0) return null;
 
   return (
     <nav aria-label="Breadcrumb">
-      <ol
-        className={`flex flex-wrap items-center gap-1.5 text-xs ${
-          onDark ? "text-white/70" : "text-[var(--text-muted)]"
-        }`}
-      >
+      <ol className="flex flex-wrap items-center gap-1.5 text-xs text-[var(--text-muted)]">
         {items.map((crumb, i) => (
           <li key={crumb.href} className="flex items-center gap-1.5">
             {i > 0 ? (
@@ -445,15 +439,13 @@ export function Breadcrumb({
               </span>
             ) : null}
             {i === items.length - 1 ? (
-              <span aria-current="page" className="font-medium opacity-90">
+              <span aria-current="page" className="font-medium text-[var(--text)]">
                 {crumb.label}
               </span>
             ) : (
               <Link
                 href={crumb.href}
-                className={`link-underline ${
-                  onDark ? "hover:text-white" : "hover:text-[var(--text)]"
-                }`}
+                className="link-underline hover:text-[var(--text)]"
               >
                 {crumb.label}
               </Link>
@@ -468,9 +460,10 @@ export function Breadcrumb({
 /**
  * Title band at the top of an interior page.
  *
- * `tone="brand"` puts it on the tenant's colour mesh, which is what the
- * landing pages for major sections use; the default keeps it quiet for
- * article and detail pages where the content should lead.
+ * `tone="brand"` puts it on the tenant's colour wash, which is what the landing
+ * pages for major sections use; the default keeps it quiet for article and
+ * detail pages where the content should lead. Both are light, so the heading
+ * stays near-black and contrast never depends on which colour a village picked.
  */
 export function PageHeader({
   title,
@@ -487,31 +480,26 @@ export function PageHeader({
   action?: ReactNode;
   tone?: "default" | "brand";
 }) {
-  const onDark = tone === "brand";
-
   return (
     <div
       className={
-        onDark
-          ? "brand-mesh relative overflow-hidden text-white"
+        tone === "brand"
+          ? "brand-mesh grain relative overflow-hidden border-b border-[var(--border)]"
           : "border-b border-[var(--border)] bg-[var(--surface-1)]"
       }
     >
-      <Container className="relative py-11 sm:py-14">
+      <Container className="relative py-12 sm:py-16">
         {breadcrumb && breadcrumb.length > 0 ? (
           <div className="mb-4">
-            <Breadcrumb items={breadcrumb} onDark={onDark} />
+            <Breadcrumb items={breadcrumb} />
           </div>
         ) : null}
 
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div className="max-w-3xl">
             {eyebrow ? (
-              <p
-                className={`mb-2 text-[0.6875rem] font-bold uppercase tracking-[0.14em] ${
-                  onDark ? "text-white/75" : "text-brand"
-                }`}
-              >
+              <p className="mb-2.5 flex items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-brand">
+                <span aria-hidden className="inline-block h-px w-7 bg-brand/50" />
                 {eyebrow}
               </p>
             ) : null}
@@ -519,11 +507,7 @@ export function PageHeader({
               {title}
             </h1>
             {description ? (
-              <p
-                className={`mt-3 max-w-2xl text-[0.9375rem] leading-relaxed ${
-                  onDark ? "text-white/80" : "text-[var(--text-muted)]"
-                }`}
-              >
+              <p className="mt-3 max-w-2xl text-[0.9375rem] leading-relaxed text-[var(--text-muted)]">
                 {description}
               </p>
             ) : null}

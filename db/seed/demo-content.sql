@@ -354,3 +354,37 @@ VALUES
    '[{"name":"tempat_lahir","label":"Tempat Lahir","type":"text","required":true},{"name":"tanggal_lahir","label":"Tanggal Lahir","type":"date","required":true},{"name":"jenis_kelamin","label":"Jenis Kelamin","type":"select","required":true,"options":["Laki-laki","Perempuan"]}]',
    3, 1, 0, 1, 'published', 50)
 ON CONFLICT (id) DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Brand colours
+--
+-- seed.sql now ships a deeper jade and a warmer accent, but it uses ON CONFLICT
+-- DO NOTHING on the villages row, so a database seeded before that change keeps
+-- the old flat green. Scoped to the demo tenant by id.
+-- ---------------------------------------------------------------------------
+
+UPDATE villages
+SET primary_color = '#0d6b52',
+    secondary_color = '#084a39',
+    accent_color = '#b98a2e',
+    updated_at = datetime('now')
+WHERE id = 'vil_demo';
+
+-- ---------------------------------------------------------------------------
+-- Statistics: fill in the placeholders
+--
+-- seed.sql ships `sta_demo_jiwa`, `sta_demo_kk`, `sta_demo_rt` and
+-- `sta_demo_rw` with value 0 so a fresh install has the shape of the dataset.
+-- The demo rows above reuse two of those ids, and ON CONFLICT DO NOTHING means
+-- the zeros win - which is how three "0" tiles ended up in the summary strip.
+-- Update them instead, and retire the duplicate `sta_demo_jiwa`.
+-- ---------------------------------------------------------------------------
+
+UPDATE statistics SET value = 1342, unit = 'KK',  period = '2026', sort_order = 20
+  WHERE id = 'sta_demo_kk' AND village_id = 'vil_demo';
+UPDATE statistics SET value = 24,   unit = 'RT',  period = '2026', sort_order = 60, dataset = 'wilayah'
+  WHERE id = 'sta_demo_rt' AND village_id = 'vil_demo';
+UPDATE statistics SET value = 8,    unit = 'RW',  period = '2026', sort_order = 70, dataset = 'wilayah'
+  WHERE id = 'sta_demo_rw' AND village_id = 'vil_demo';
+
+DELETE FROM statistics WHERE id = 'sta_demo_jiwa' AND village_id = 'vil_demo';

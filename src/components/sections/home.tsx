@@ -52,6 +52,7 @@ import {
   IconPin,
   IconPlay,
   IconStore,
+  IconUsers,
   SocialIcon,
 } from "@/components/icons";
 import {
@@ -86,95 +87,177 @@ function dayParts(iso: string, locale: string, timezone: string) {
 /* -------------------------------------------------------------------------- */
 
 export async function HeroBanner({ village, section }: SectionProps) {
-  const banners = await listBanners(village.id, "hero");
+  const [banners, penduduk, wilayah] = await Promise.all([
+    listBanners(village.id, "hero"),
+    listStatistics(village.id, "penduduk"),
+    listStatistics(village.id, "wilayah"),
+  ]);
+
   const [primary, ...rest] = banners;
-
   const cover = mediaUrl(primary?.mediaId ?? null);
-  const region = [village.district, village.regency, village.province]
-    .filter(Boolean)
-    .join(", ");
 
-  const heading =
-    primary?.title ??
-    section.title ??
-    `Selamat Datang di ${village.entityLabel} ${village.name}`;
+  const region = [village.district, village.regency].filter(Boolean).join(", ");
+
+  // The village name is set in the accent colour on its own line, so the
+  // greeting reads as a masthead rather than a sentence. Falls back to the
+  // banner or section title when an operator has written their own headline.
+  const customHeading = primary?.title ?? section.title ?? null;
+
+  // Five figures at most: the strip is a glance, not a report, and the full
+  // dataset still has its own section further down the page. Zero-valued rows
+  // are dropped - a village that has not filled in a figure yet should show
+  // one fewer tile, not a tile reading "0".
+  const stats = [...penduduk, ...wilayah]
+    .filter((entry) => entry.value > 0)
+    .slice(0, 5);
+
+  const onPhoto = Boolean(cover);
 
   return (
-    <section className="brand-mesh relative isolate overflow-hidden">
-      {cover ? (
-        <>
-          <img
-            src={cover}
-            alt=""
-            className="absolute inset-0 -z-10 h-full w-full object-cover"
-            fetchPriority="high"
-          />
-          {/* Two layers: a flat wash that guarantees contrast on any photograph,
-              and a directional gradient so the left column, where the text
-              sits, is the darkest part of the frame. */}
+    <>
+      <section
+        className={`relative isolate overflow-hidden ${
+          onPhoto ? "" : "brand-mesh grain"
+        }`}
+      >
+        {onPhoto ? (
+          <>
+            <img
+              src={cover!}
+              alt=""
+              fetchPriority="high"
+              className="absolute inset-0 -z-20 h-full w-full object-cover"
+            />
+            {/* Two overlays: a brand-tinted wash that ties any photograph to
+                the tenant's colour, and a left-weighted gradient so the column
+                the words sit in is always the darkest part of the frame. */}
+            <div
+              aria-hidden
+              className="absolute inset-0 -z-10 bg-brand-900/75"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-0 -z-10 bg-gradient-to-r from-black/70 via-black/40 to-transparent"
+            />
+          </>
+        ) : null}
+
+        <Container>
           <div
-            aria-hidden
-            className="absolute inset-0 -z-10 bg-brand-900/70"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 -z-10 bg-gradient-to-r from-black/65 via-black/35 to-transparent"
-          />
-        </>
+            className={`min-w-0 max-w-3xl ${
+              stats.length > 0 ? "pb-28 pt-14 sm:pb-32 sm:pt-20" : "py-14 sm:py-20 lg:py-24"
+            } ${onPhoto ? "text-white" : ""}`}
+          >
+            {region ? (
+              <p
+                className={`mb-5 flex min-w-0 max-w-full items-center gap-2 self-start rounded-full border px-3.5 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider backdrop-blur-sm sm:inline-flex sm:text-xs ${
+                  onPhoto
+                    ? "border-white/25 bg-white/10 text-white/85"
+                    : "border-[var(--border-strong)] bg-[var(--surface)]/70 text-[var(--text-muted)]"
+                }`}
+              >
+                <IconPin
+                  className={`h-3.5 w-3.5 shrink-0 ${onPhoto ? "" : "text-brand"}`}
+                />
+                <span className="truncate">{region}</span>
+              </p>
+            ) : null}
+
+            {customHeading ? (
+              <h1 className="text-[length:var(--text-display)] font-extrabold leading-[1.03] tracking-[-0.03em]">
+                {customHeading}
+              </h1>
+            ) : (
+              <h1 className="font-display leading-[0.98] tracking-[-0.035em]">
+                <span className="block text-[length:var(--text-h2)] font-semibold opacity-90">
+                  Selamat Datang di {village.entityLabel}
+                </span>
+                <span className="mt-1 block break-words text-[length:var(--text-display)] font-extrabold uppercase text-brand-accent">
+                  {village.name}
+                </span>
+              </h1>
+            )}
+
+            {primary?.subtitle || section.subtitle ? (
+              <p
+                className={`mt-6 max-w-xl text-base leading-relaxed sm:text-lg ${
+                  onPhoto ? "text-white/85" : "text-[var(--text-muted)]"
+                }`}
+              >
+                {primary?.subtitle ?? section.subtitle}
+              </p>
+            ) : null}
+
+            {/* Equal full-width buttons on a phone; a thumb should not have to
+                aim at two differently sized targets. */}
+            <div className="mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row sm:flex-wrap">
+              <ButtonLink
+                href={primary?.linkUrl ?? "/layanan"}
+                size="lg"
+                variant={onPhoto ? "onDark" : "primary"}
+                className="w-full sm:w-auto"
+              >
+                {primary?.linkLabel ?? "Ajukan Surat Online"}
+                <IconArrowRight className="h-4 w-4" />
+              </ButtonLink>
+              <ButtonLink
+                href="/profil"
+                size="lg"
+                variant={onPhoto ? "ghost" : "secondary"}
+                className={
+                  onPhoto
+                    ? "w-full border border-brand-accent/70 text-brand-accent hover:bg-white/10 sm:w-auto"
+                    : "w-full sm:w-auto"
+                }
+              >
+                Profil Desa
+              </ButtonLink>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Figures lifted out of the statistics section and floated across the
+          hero boundary. It is the first thing a visitor wants from a village
+          site and it gives the fold depth without another dark band. */}
+      {stats.length > 0 ? (
+        <Container className="relative z-10 -mt-20 sm:-mt-24">
+          <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--border)] shadow-[var(--shadow-lg)] sm:grid-cols-3 lg:grid-cols-5">
+            {stats.map((entry) => (
+              <div
+                key={entry.label}
+                className="flex min-w-0 items-center gap-3 bg-[var(--surface)] px-4 py-5"
+              >
+                <span
+                  aria-hidden
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand"
+                >
+                  <IconUsers className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <dd className="font-display text-xl font-bold leading-none tabular-nums">
+                    {formatNumber(entry.value)}
+                  </dd>
+                  <dt className="mt-1 truncate text-xs text-[var(--text-muted)]">
+                    {entry.label}
+                  </dt>
+                </div>
+              </div>
+            ))}
+          </dl>
+        </Container>
       ) : null}
 
-      <Container className="relative py-20 sm:py-28 lg:py-32">
-        <div className="max-w-3xl text-white">
-          {region ? (
-            <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/12 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider ring-1 ring-inset ring-white/20 backdrop-blur-sm">
-              <IconPin className="h-3.5 w-3.5" />
-              {region}
-            </p>
-          ) : null}
-
-          <h1 className="text-[length:var(--text-display)] font-bold leading-[1.05] tracking-tight">
-            {heading}
-          </h1>
-
-          {primary?.subtitle || section.subtitle ? (
-            <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg">
-              {primary?.subtitle ?? section.subtitle}
-            </p>
-          ) : null}
-
-          <div className="mt-9 flex flex-wrap gap-3">
-            {primary?.linkUrl ? (
-              <ButtonLink href={primary.linkUrl} variant="onDark" size="lg">
-                {primary.linkLabel ?? "Selengkapnya"}
-                <IconArrowRight className="h-4 w-4" />
-              </ButtonLink>
-            ) : (
-              <ButtonLink href="/layanan" variant="onDark" size="lg">
-                Ajukan Surat Online
-                <IconArrowRight className="h-4 w-4" />
-              </ButtonLink>
-            )}
-            <ButtonLink
-              href="/berita"
-              size="lg"
-              variant="ghost"
-              className="border border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
-            >
-              Berita Terbaru
-            </ButtonLink>
-          </div>
-        </div>
-      </Container>
-
-      {/* Secondary hero banners become a highlight strip that overlaps the
-          section boundary, so the fold has depth instead of a hard edge. */}
+      {/* Secondary hero banners become a highlight strip. It sits outside the
+          hero because that section clips its own overflow, which would slice
+          the top off any card overlapping its boundary. */}
       {rest.length > 0 ? (
-        <Container className="relative -mb-8 translate-y-8">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Container className={`relative z-10 ${stats.length > 0 ? "mt-6" : "-mt-10"}`}>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {rest.slice(0, 3).map((banner) => (
               <div
                 key={banner.id}
-                className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-lg)]"
+                className="min-w-0 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-md)]"
               >
                 <p className="font-semibold leading-snug">{banner.title}</p>
                 {banner.subtitle ? (
@@ -198,7 +281,7 @@ export async function HeroBanner({ village, section }: SectionProps) {
           </div>
         </Container>
       ) : null}
-    </section>
+    </>
   );
 }
 
@@ -1238,20 +1321,21 @@ export async function KontakSection({ village, section }: SectionProps) {
           })}
         </div>
 
-        <div className="brand-mesh flex flex-col justify-center rounded-[var(--radius-card)] p-7 text-white shadow-[var(--shadow-lg)] lg:w-80">
-          <IconChat className="h-8 w-8" />
-          <p className="mt-4 font-display text-lg font-bold leading-snug">
+        <div className="brand-mesh flex flex-col justify-center rounded-[var(--radius-card)] border border-[var(--border-strong)] p-7 shadow-[var(--shadow-md)] lg:w-80">
+          <span
+            aria-hidden
+            className="grid h-11 w-11 place-items-center rounded-xl bg-brand text-[var(--text-on-brand)] shadow-[var(--shadow-brand)]"
+          >
+            <IconChat className="h-5 w-5" />
+          </span>
+          <p className="mt-5 font-display text-lg font-bold leading-snug">
             Ada keluhan atau masukan?
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-white/80">
+          <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
             Sampaikan melalui kanal pengaduan resmi. Setiap laporan mendapat
             nomor tiket untuk dipantau.
           </p>
-          <ButtonLink
-            href="/pengaduan"
-            variant="onDark"
-            className="mt-6 self-start"
-          >
+          <ButtonLink href="/pengaduan" className="mt-6 self-start">
             Kirim Pengaduan
             <IconArrowRight className="h-4 w-4" />
           </ButtonLink>
