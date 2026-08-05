@@ -28,6 +28,7 @@ import { mediaUrl } from "@/lib/media";
 import { getMenu } from "@/lib/navigation";
 import { sanitizeHtml } from "@/lib/sanitize";
 
+import { VillageScene } from "@/components/village-scene";
 import {
   Badge,
   ButtonLink,
@@ -111,19 +112,17 @@ export async function HeroBanner({ village, section }: SectionProps) {
     .filter((entry) => entry.value > 0)
     .slice(0, 5);
 
-  const onPhoto = Boolean(cover);
+  // The hero is dark either way - a photograph when the village has uploaded
+  // one, the drawn village office when it has not - so the copy is styled for
+  // a dark backdrop unconditionally and never has to switch schemes.
 
   return (
     <>
-      <section
-        className={`relative isolate overflow-hidden ${
-          onPhoto ? "" : "brand-mesh grain"
-        }`}
-      >
-        {onPhoto ? (
+      <section className="relative isolate overflow-hidden">
+        {cover ? (
           <>
             <img
-              src={cover!}
+              src={cover}
               alt=""
               fetchPriority="high"
               className="absolute inset-0 -z-20 h-full w-full object-cover"
@@ -140,25 +139,34 @@ export async function HeroBanner({ village, section }: SectionProps) {
               className="absolute inset-0 -z-10 bg-gradient-to-r from-black/70 via-black/40 to-transparent"
             />
           </>
-        ) : null}
+        ) : (
+          <>
+            <VillageScene
+              villageName={village.name}
+              entityLabel={village.entityLabel}
+              className="absolute inset-0 -z-20 h-full w-full"
+            />
+            {/* Lighter than the photo scrim: the illustration is already dark
+                where the words sit, so it only needs enough to guarantee
+                contrast at the smallest sizes. */}
+            <div
+              aria-hidden
+              className="absolute inset-0 -z-10 bg-gradient-to-r from-black/62 via-black/28 to-transparent"
+            />
+          </>
+        )}
 
         <Container>
           <div
-            className={`min-w-0 max-w-3xl ${
-              stats.length > 0 ? "pb-28 pt-14 sm:pb-32 sm:pt-20" : "py-14 sm:py-20 lg:py-24"
-            } ${onPhoto ? "text-white" : ""}`}
+            className={`hero-in min-w-0 max-w-3xl text-white ${
+              stats.length > 0
+                ? "pb-28 pt-16 sm:pb-32 sm:pt-24 lg:pt-28"
+                : "py-16 sm:py-24 lg:py-28"
+            }`}
           >
             {region ? (
-              <p
-                className={`mb-5 flex min-w-0 max-w-full items-center gap-2 self-start rounded-full border px-3.5 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider backdrop-blur-sm sm:inline-flex sm:text-xs ${
-                  onPhoto
-                    ? "border-white/25 bg-white/10 text-white/85"
-                    : "border-[var(--border-strong)] bg-[var(--surface)]/70 text-[var(--text-muted)]"
-                }`}
-              >
-                <IconPin
-                  className={`h-3.5 w-3.5 shrink-0 ${onPhoto ? "" : "text-brand"}`}
-                />
+              <p className="mb-5 flex min-w-0 max-w-full items-center gap-2 self-start rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-white/85 backdrop-blur-sm sm:inline-flex sm:text-xs">
+                <IconPin className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{region}</span>
               </p>
             ) : null}
@@ -179,11 +187,7 @@ export async function HeroBanner({ village, section }: SectionProps) {
             )}
 
             {primary?.subtitle || section.subtitle ? (
-              <p
-                className={`mt-6 max-w-xl text-base leading-relaxed sm:text-lg ${
-                  onPhoto ? "text-white/85" : "text-[var(--text-muted)]"
-                }`}
-              >
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
                 {primary?.subtitle ?? section.subtitle}
               </p>
             ) : null}
@@ -194,7 +198,7 @@ export async function HeroBanner({ village, section }: SectionProps) {
               <ButtonLink
                 href={primary?.linkUrl ?? "/layanan"}
                 size="lg"
-                variant={onPhoto ? "onDark" : "primary"}
+                variant="onDark"
                 className="w-full sm:w-auto"
               >
                 {primary?.linkLabel ?? "Ajukan Surat Online"}
@@ -203,12 +207,8 @@ export async function HeroBanner({ village, section }: SectionProps) {
               <ButtonLink
                 href="/profil"
                 size="lg"
-                variant={onPhoto ? "ghost" : "secondary"}
-                className={
-                  onPhoto
-                    ? "w-full border border-brand-accent/70 text-brand-accent hover:bg-white/10 sm:w-auto"
-                    : "w-full sm:w-auto"
-                }
+                variant="ghost"
+                className="w-full border border-brand-accent/70 text-brand-accent hover:bg-white/10 sm:w-auto"
               >
                 Profil Desa
               </ButtonLink>
