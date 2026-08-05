@@ -82,10 +82,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fefdfb" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c0d0c" },
-  ],
+  // One value, not a light/dark pair: the site no longer follows the OS
+  // setting, so advertising a dark theme colour would tint the browser chrome
+  // to something the page never renders.
+  themeColor: "#fefdfb",
 };
 
 export default async function RootLayout({

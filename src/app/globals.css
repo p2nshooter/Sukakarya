@@ -43,10 +43,10 @@
 
   /* Fluid type scale. Headings shrink on phones without a media query and
      without ever dropping below a readable size. */
-  --text-display: clamp(2.25rem, 1.4rem + 3.6vw, 4rem);
-  --text-h1: clamp(1.875rem, 1.35rem + 2.2vw, 3rem);
-  --text-h2: clamp(1.5rem, 1.2rem + 1.2vw, 2.125rem);
-  --text-h3: clamp(1.185rem, 1.05rem + 0.55vw, 1.5rem);
+  --text-display: clamp(1.875rem, 1.1rem + 3.3vw, 3.75rem);
+  --text-h1: clamp(1.625rem, 1.15rem + 2vw, 2.75rem);
+  --text-h2: clamp(1.375rem, 1.1rem + 1.1vw, 2rem);
+  --text-h3: clamp(1.125rem, 1rem + 0.5vw, 1.4375rem);
 
   --radius-card: 1rem;
   --radius-lg: 0.75rem;
@@ -98,30 +98,14 @@
    nearly invisible on dark backgrounds. Borders carry the separation.
    -------------------------------------------------------------------------- */
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --surface: #0c0d0c;
-    --surface-1: #141613;
-    --surface-2: #1c1f1b;
-    --surface-3: #262a24;
-    --surface-inverse: #f9f7f3;
+/* Dark is opt-in only.
+   
+   This deliberately does NOT follow prefers-color-scheme. Most phones in
+   Indonesia ship with dark mode on, so honouring the OS setting meant the
+   light design was never the thing a visitor actually saw. Dark now applies
+   only when someone presses the toggle, which writes data-theme="dark".
+   The theme-color meta and the toggle's own default follow the same rule. */
 
-    --border: #292d26;
-    --border-strong: #3a3f36;
-
-    --text: #f0ede7;
-    --text-muted: #a49d92;
-    --text-subtle: #777066;
-
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-    --shadow-md: 0 2px 4px rgb(0 0 0 / 0.4), 0 6px 16px -4px rgb(0 0 0 / 0.5);
-    --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.4), 0 16px 32px -8px rgb(0 0 0 / 0.6);
-    --shadow-xl: 0 8px 16px rgb(0 0 0 / 0.5), 0 32px 64px -16px rgb(0 0 0 / 0.7);
-
-    --scrim: rgb(0 0 0 / 0.65);
-    color-scheme: dark;
-  }
-}
 
 :root[data-theme="dark"] {
   --surface: #0c0d0c;
@@ -157,6 +141,11 @@
 html {
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  overflow-x: clip;
 }
 
 body {
@@ -290,22 +279,6 @@ p {
 
 /* In dark mode the same panel has to lift off the page instead of washing it,
    so the stops get stronger and the base moves up a surface level. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .brand-mesh {
-    background-color: var(--surface-1);
-    background-image:
-      radial-gradient(
-        ellipse 75% 60% at 8% -10%,
-        color-mix(in oklab, var(--color-brand) 30%, transparent),
-        transparent 62%
-      ),
-      radial-gradient(
-        ellipse 60% 65% at 96% 6%,
-        color-mix(in oklab, var(--color-brand-accent) 18%, transparent),
-        transparent 58%
-      );
-  }
-}
 
 :root[data-theme="dark"] .brand-mesh {
   background-color: var(--surface-1);
@@ -442,6 +415,14 @@ p {
 
 .marquee-host:hover .marquee-track {
   animation-play-state: paused;
+}
+
+/* The track is deliberately wider than its box. Without this the overflow
+   propagates to <body> and the whole page can be dragged sideways on a
+   phone, which reads as a broken layout. */
+.marquee-host {
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* --------------------------------------------------------------------------

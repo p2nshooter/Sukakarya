@@ -81,18 +81,18 @@ export function SiteHeader({
         {/* Utility strip: the details a citizen looks for before anything else -
             where the office is, when it is open, how to reach it. Desktop only;
             on a phone these live in the footer instead of eating the viewport. */}
-        <div className="hidden border-b border-[var(--border)] bg-[var(--surface-1)] text-[var(--text-muted)] lg:block">
+        <div className="hidden bg-brand-800 text-white/75 lg:block">
           <Container className="flex items-center justify-between gap-6 py-2 text-xs">
             <div className="flex min-w-0 items-center gap-5">
               {village.address ? (
                 <span className="flex min-w-0 items-center gap-1.5">
-                  <IconPin className="h-3.5 w-3.5 shrink-0 text-brand" />
+                  <IconPin className="h-3.5 w-3.5 shrink-0 text-brand-accent" />
                   <span className="truncate">{village.address}</span>
                 </span>
               ) : null}
               {officeHours ? (
                 <span className="flex shrink-0 items-center gap-1.5">
-                  <IconClock className="h-3.5 w-3.5 text-brand" />
+                  <IconClock className="h-3.5 w-3.5 text-brand-accent" />
                   {officeHours}
                 </span>
               ) : null}
@@ -102,18 +102,18 @@ export function SiteHeader({
               {village.phone ? (
                 <a
                   href={`tel:${village.phone.replace(/\s/g, "")}`}
-                  className="flex items-center gap-1.5 transition-colors hover:text-[var(--text)]"
+                  className="flex items-center gap-1.5 transition-colors hover:text-white"
                 >
-                  <IconPhone className="h-3.5 w-3.5 text-brand" />
+                  <IconPhone className="h-3.5 w-3.5 text-brand-accent" />
                   {village.phone}
                 </a>
               ) : null}
               {show("email") && village.email ? (
                 <a
                   href={`mailto:${village.email}`}
-                  className="flex items-center gap-1.5 transition-colors hover:text-[var(--text)]"
+                  className="flex items-center gap-1.5 transition-colors hover:text-white"
                 >
-                  <IconMail className="h-3.5 w-3.5 text-brand" />
+                  <IconMail className="h-3.5 w-3.5 text-brand-accent" />
                   {village.email}
                 </a>
               ) : null}
