@@ -1,0 +1,103 @@
+name: Deploy roster app
+
+# The roster app is a separate Worker on a separate database from the village
+# CMS, so it gets a separate pipeline. Nothing here touches app-desa, and a
+# failure on one side cannot take the other down.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/tim/**"
+      - ".github/workflows/deploy-tim.yml"
+  workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: "Create the D1 database and R2 bucket first (one-off)"
+        type: boolean
+        default: false
+      apply_schema:
+        description: "Apply apps/tim/schema.sql before deploying"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-app-tim
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy app-tim
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CONFIG: apps/tim/wrangler.jsonc
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc -p apps/tim/tsconfig.json
+
+      - name: Check required secrets are present
+        run: |
+          missing=""
+          [ -z "$CLOUDFLARE_API_TOKEN" ]  && missing="$missing CLOUDFLARE_API_TOKEN"
+          [ -z "$CLOUDFLARE_ACCOUNT_ID" ] && missing="$missing CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secret(s):$missing"
+            exit 1
+          fi
+
+      # One-off. Prints the database id so it can be written into
+      # apps/tim/wrangler.jsonc, the same way the CMS was provisioned.
+      - name: Create D1 and R2
+        if: inputs.bootstrap
+        run: |
+          {
+            echo "## Bootstrap"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          npx wrangler d1 create app-tim-db 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
+          npx wrangler r2 bucket create app-tim-archive 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
+          npx wrangler d1 list --json 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      # The schema is idempotent (CREATE TABLE IF NOT EXISTS throughout), so
+      # re-applying it is safe and never drops a row.
+      - name: Apply schema
+        if: inputs.apply_schema
+        run: npx wrangler d1 execute app-tim-db --remote --file=./apps/tim/schema.sql --config "$CONFIG"
+
+      - name: Deploy Worker
+        run: npx wrangler deploy --config "$CONFIG"
+
+      - name: Summary
+        run: |
+          {
+            echo "### Roster app deployed"
+            echo ""
+            echo "- Worker: \`app-tim\` (separate from \`app-desa\`)"
+            echo "- D1: \`app-tim-db\`"
+            echo "- R2: \`app-tim-archive\` (snapshots and exports)"
+            echo ""
+            echo "Create the first operator with:"
+            echo '```'
+            echo "OPERATOR_PASSWORD='...' node apps/tim/scripts/create-operator.mjs \\"
+            echo "  --org 'Tim Contoh' --slug contoh --email admin@contoh.test > op.sql"
+            echo "npx wrangler d1 execute app-tim-db --remote --file=op.sql --config apps/tim/wrangler.jsonc"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

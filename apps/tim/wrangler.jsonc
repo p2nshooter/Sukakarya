@@ -1,0 +1,43 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "app-tim",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "observability": {
+    "enabled": true
+  },
+
+  // Deliberately its own Worker and its own database. It shares no binding,
+  // no cookie and no route with the village CMS: a visitor to the public site
+  // has no path into this data, and this app cannot write village content.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "app-tim-db",
+      "database_id": "SET_AFTER_BOOTSTRAP"
+    }
+  ],
+
+  // R2 carries what is actually bulky and does not need querying: nightly
+  // snapshots, operator exports, and file attachments. The queryable rows stay
+  // in D1, where an index and a transaction mean something - a few thousand
+  // members is single-digit megabytes against a 10 GB ceiling.
+  "r2_buckets": [
+    {
+      "binding": "ARCHIVE",
+      "bucket_name": "app-tim-archive"
+    }
+  ],
+
+  "vars": {
+    "APP_NAME": "app-tim"
+  },
+
+  "triggers": {
+    // Nightly snapshot to R2. Keeps a restorable copy off the live database
+    // without an operator having to remember to press anything.
+    "crons": ["17 19 * * *"]
+  }
+}
