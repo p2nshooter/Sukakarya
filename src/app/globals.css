@@ -398,6 +398,104 @@ p {
   animation: rise-in 0.5s var(--ease-out-soft) both;
 }
 
+/* --------------------------------------------------------------------------
+   Village scene
+
+   Ambient motion for the drawn hero. Everything here is slow and small: the
+   scene should feel alive when you look at it, not demand that you do.
+   -------------------------------------------------------------------------- */
+
+@keyframes vs-sway {
+  0%,
+  100% {
+    transform: rotate(-1.6deg);
+  }
+  50% {
+    transform: rotate(1.6deg);
+  }
+}
+
+.vs-frond {
+  animation: vs-sway 7s ease-in-out infinite;
+}
+
+@keyframes vs-flag-wave {
+  0%,
+  100% {
+    transform: skewY(0deg) scaleX(1);
+  }
+  50% {
+    transform: skewY(-2.2deg) scaleX(0.97);
+  }
+}
+
+.vs-flag {
+  animation: vs-flag-wave 3.4s ease-in-out infinite;
+}
+
+/* Leaves drift down and across, then reset. Three offset timings stop them
+   moving as a block. */
+@keyframes vs-drift {
+  0% {
+    transform: translate(0, -40px) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.55;
+  }
+  88% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(-120px, 300px) rotate(220deg);
+    opacity: 0;
+  }
+}
+
+.vs-leaf {
+  animation: vs-drift 16s linear infinite;
+}
+.vs-leaf-a {
+  animation-duration: 19s;
+  animation-delay: -3s;
+}
+.vs-leaf-b {
+  animation-duration: 15s;
+  animation-delay: -8s;
+}
+.vs-leaf-c {
+  animation-duration: 22s;
+  animation-delay: -12s;
+}
+
+/* A slow bloom on the hero copy. Runs once, so it never competes with reading. */
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-in > * {
+  animation: hero-in 0.7s var(--ease-out-soft) both;
+}
+.hero-in > *:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.hero-in > *:nth-child(2) {
+  animation-delay: 0.14s;
+}
+.hero-in > *:nth-child(3) {
+  animation-delay: 0.23s;
+}
+.hero-in > *:nth-child(4) {
+  animation-delay: 0.32s;
+}
+
 @keyframes marquee {
   from {
     transform: translateX(0);
@@ -579,8 +677,18 @@ p {
     min-width: 0;
   }
 
-  .rise-in {
+  .rise-in,
+  .vs-frond,
+  .vs-flag,
+  .vs-leaf,
+  .hero-in > * {
     animation: none;
+  }
+
+  /* Leaves are positioned by their animation; without it they would pile up
+     at their start coordinates, so hide them outright. */
+  .vs-leaves {
+    display: none;
   }
 
   .hover-lift:hover {
