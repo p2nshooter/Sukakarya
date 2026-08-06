@@ -136,6 +136,8 @@ function FormControl({
     );
   }
 
+  // The label already carries an asterisk; marking the control itself lets the
+  // browser say so before a round-trip to the server and a red banner.
   const control =
     field.kind === "media" ? (
       <MediaPicker name={field.name} defaultValue={String(current ?? "")} />
@@ -146,6 +148,7 @@ function FormControl({
         rows={field.kind === "html" ? 10 : 3}
         defaultValue={String(current ?? "")}
         maxLength={field.maxLength ?? 40000}
+        required={field.required}
         className={`${FIELD_CLASS} ${field.kind === "html" ? "font-mono text-[0.8125rem]" : ""}`}
         placeholder={field.placeholder}
       />
@@ -179,6 +182,7 @@ function FormControl({
         }
         maxLength={field.maxLength ?? 500}
         placeholder={field.placeholder}
+        required={field.required}
         className={FIELD_CLASS}
       />
     );
