@@ -26,10 +26,21 @@ import {
   listArchive,
   readArchive,
   snapshotAll,
+  storeReport,
   writeExport,
   writeSnapshot,
 } from "./archive";
-import { renderApp, renderLogin } from "./ui";
+import {
+  isFormat,
+  isReportKind,
+  loadIdentity,
+  renderReport,
+  reportOptions,
+  saveIdentity,
+  REPORT_KINDS,
+  type ReportFilters,
+} from "./reports";
+import { renderApp, renderLogin, renderNotice } from "./ui";
 
 interface Env {
   DB: D1Database;
@@ -361,6 +372,90 @@ export default {
             object.httpMetadata?.contentType ?? "application/octet-stream",
           "content-disposition": `attachment; filename="${key.split("/").pop()}"`,
           ...SECURITY_HEADERS,
+        },
+      });
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Reports                                                           */
+    /* ---------------------------------------------------------------- */
+
+    if (path === "/api/laporan" && request.method === "GET") {
+      return json({
+        kinds: Object.entries(REPORT_KINDS).map(([key, value]) => ({
+          key,
+          title: value.title,
+          description: value.description,
+        })),
+        options: await reportOptions(env.DB, session.orgId),
+        identity: await loadIdentity(env.DB, session.orgId),
+        canIncludeNik: session.role === "admin",
+      });
+    }
+
+    if (path === "/api/pengaturan" && request.method === "POST") {
+      // The letterhead is what a signed document claims to be, so changing it
+      // is an admin decision rather than a data-entry one.
+      if (session.role !== "admin") return json({ error: "Hanya admin." }, 403);
+
+      const body = (await request.json().catch(() => ({}))) as Record<
+        string,
+        unknown
+      >;
+      await saveIdentity(env.DB, session, body, ipHash);
+      return json({ ok: true, identity: await loadIdentity(env.DB, session.orgId) });
+    }
+
+    // A plain GET, so the button can be an ordinary link and the browser's own
+    // download manager handles it - no blob, no JavaScript, works on any phone.
+    if (path === "/laporan/unduh" && request.method === "GET") {
+      const p = url.searchParams;
+      const kind = p.get("jenis") ?? "";
+      const format = p.get("format") ?? "";
+
+      if (!isReportKind(kind) || !isFormat(format)) {
+        return html(
+          renderNotice("Jenis laporan atau format tidak dikenal."),
+          400,
+        );
+      }
+
+      const filters: ReportFilters = {};
+      for (const field of ["kadus", "rt", "tps", "jabatan", "status", "q"] as const) {
+        const value = p.get(field);
+        if (value) filters[field] = value.slice(0, 80);
+      }
+
+      const rendered = await renderReport(
+        env.DB,
+        session,
+        {
+          kind,
+          format,
+          filters,
+          includeNik: p.get("nik") === "1",
+          kegiatan: p.get("kegiatan") ?? undefined,
+          tanggal: p.get("tanggal") ?? undefined,
+          tempat: p.get("tempat") ?? undefined,
+        },
+        ipHash,
+      );
+
+      // The print view is the one format worth opening in a tab; everything
+      // else is a file the operator wants on disk.
+      const inline = format === "html" && p.get("inline") === "1";
+
+      if (p.get("simpan") === "1") {
+        await storeReport(env, session, rendered.filename, rendered.body,
+          rendered.contentType, rendered.rows, ipHash);
+      }
+
+      return new Response(rendered.body as BodyInit, {
+        headers: {
+          ...SECURITY_HEADERS,
+          "content-type": rendered.contentType,
+          "content-disposition":
+            `${inline ? "inline" : "attachment"}; filename="${rendered.filename}"`,
         },
       });
     }

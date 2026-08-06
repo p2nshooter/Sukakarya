@@ -31,6 +31,25 @@ CREATE TABLE IF NOT EXISTS orgs (
 );
 
 -- ---------------------------------------------------------------------------
+-- Org settings
+--
+-- The letterhead, the candidate's name, the period, the signatory - everything
+-- that appears at the top and bottom of a printed report but is not a member.
+--
+-- Key/value rather than columns on `orgs` so the schema file stays idempotent:
+-- a new setting is a new row, never an ALTER TABLE that fails the second time
+-- the file is applied.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS org_settings (
+  org_id      TEXT NOT NULL REFERENCES orgs (id) ON DELETE CASCADE,
+  key         TEXT NOT NULL,
+  value       TEXT NOT NULL DEFAULT '',
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (org_id, key)
+);
+
+-- ---------------------------------------------------------------------------
 -- Operators
 --
 -- Passwords are PBKDF2-SHA256 with a per-user salt, the same construction the

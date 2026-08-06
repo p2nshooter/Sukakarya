@@ -25,7 +25,8 @@ import {
   truncate,
 } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
-import { getMenu } from "@/lib/navigation";
+import { filterNav, getMenu } from "@/lib/navigation";
+import { getVillageModules, shouldRender } from "@/lib/modules/registry";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 import { VillageScene } from "@/components/village-scene";
@@ -419,8 +420,19 @@ export async function SambutanKepalaDesa({ village, section }: SectionProps) {
 /* Quick menu, driven by the `quick` menu in the database                       */
 /* -------------------------------------------------------------------------- */
 
-export async function QuickMenu({ village, section }: SectionProps) {
-  const items = await getMenu(village.id, "quick");
+export async function QuickMenu({ village, viewer, section }: SectionProps) {
+  // The header and footer both run their menus through filterNav; this one did
+  // not, so a tile whose module is hidden still rendered - which is how a link
+  // to a disabled page reached the homepage - and a tile bound to a staff-only
+  // module would have been shown to anonymous visitors.
+  const [raw, modules] = await Promise.all([
+    getMenu(village.id, "quick"),
+    getVillageModules(village.id),
+  ]);
+
+  const items = filterNav(raw, viewer, (id) =>
+    shouldRender(modules.get(id), { viewer }),
+  );
   if (items.length === 0) return null;
 
   return (
