@@ -245,7 +245,7 @@ export function MoreLink({
   return (
     <Link
       href={href}
-      className="group inline-flex items-center gap-1.5 text-sm font-semibold text-brand"
+      className="group inline-flex items-center gap-1.5 py-1 text-sm font-semibold text-brand"
     >
       <span className="link-underline">{label}</span>
       <svg
@@ -445,7 +445,7 @@ export function Breadcrumb({
             ) : (
               <Link
                 href={crumb.href}
-                className="link-underline hover:text-[var(--text)]"
+                className="link-underline inline-block py-1 hover:text-[var(--text)]"
               >
                 {crumb.label}
               </Link>

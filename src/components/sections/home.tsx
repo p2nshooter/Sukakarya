@@ -142,17 +142,22 @@ export async function HeroBanner({ village, section }: SectionProps) {
           </>
         ) : (
           <>
+            {/* The scene is composed with the building in the right third, which
+                works when the headline sits beside it. On a phone the words run
+                the full width and `slice` crops the illustration towards its
+                centre, so the roof ends up cutting straight through the
+                paragraph. Below `sm` the scene is confined to the lower part of
+                the hero, where it reads as a backdrop instead. */}
             <VillageScene
               villageName={village.name}
               entityLabel={village.entityLabel}
-              className="absolute inset-0 -z-20 h-full w-full"
+              className="absolute inset-x-0 bottom-0 -z-20 h-[58%] w-full sm:inset-0 sm:h-full"
             />
-            {/* Lighter than the photo scrim: the illustration is already dark
-                where the words sit, so it only needs enough to guarantee
-                contrast at the smallest sizes. */}
+            {/* A left-to-right scrim protects text that sits on the left. Full
+                width text needs the gradient to run top-to-bottom instead. */}
             <div
               aria-hidden
-              className="absolute inset-0 -z-10 bg-gradient-to-r from-black/62 via-black/28 to-transparent"
+              className="absolute inset-0 -z-10 bg-gradient-to-b from-black/80 via-black/58 to-black/42 sm:bg-gradient-to-r sm:from-black/62 sm:via-black/28 sm:to-transparent"
             />
           </>
         )}
@@ -209,7 +214,11 @@ export async function HeroBanner({ village, section }: SectionProps) {
                 href="/profil"
                 size="lg"
                 variant="ghost"
-                className="w-full border border-brand-accent/70 text-brand-accent hover:bg-white/10 sm:w-auto"
+                // A transparent outline button lands on top of the illustration
+                // on a phone, where the roof and the signboard show straight
+                // through the label. A dark translucent fill keeps the gold
+                // readable without hiding the scene behind it.
+                className="w-full border border-brand-accent/70 bg-black/35 text-brand-accent backdrop-blur-[2px] hover:bg-white/10 sm:w-auto sm:bg-transparent sm:backdrop-blur-none"
               >
                 Profil Desa
               </ButtonLink>
@@ -269,7 +278,7 @@ export async function HeroBanner({ village, section }: SectionProps) {
                 {banner.linkUrl ? (
                   <Link
                     href={banner.linkUrl}
-                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand"
+                    className="mt-3 inline-flex items-center gap-1.5 py-1 text-sm font-semibold text-brand"
                   >
                     <span className="link-underline">
                       {banner.linkLabel ?? "Selengkapnya"}
@@ -321,7 +330,7 @@ function BannerStrip({
               {banner.linkUrl ? (
                 <Link
                   href={banner.linkUrl}
-                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand"
+                  className="mt-4 inline-flex items-center gap-1.5 py-1 text-sm font-semibold text-brand"
                 >
                   <span className="link-underline">
                     {banner.linkLabel ?? "Selengkapnya"}
@@ -552,7 +561,7 @@ export async function BeritaTerbaru({ village, section }: SectionProps) {
             <h3 className="mt-3 font-display text-xl font-bold leading-snug">
               <Link
                 href={`/berita/${lead.slug}`}
-                className="transition-colors hover:text-brand"
+                className="inline-block py-0.5 transition-colors hover:text-brand"
               >
                 {lead.title}
               </Link>
@@ -588,7 +597,7 @@ export async function BeritaTerbaru({ village, section }: SectionProps) {
                   <h3 className="mt-1 font-semibold leading-snug">
                     <Link
                       href={`/berita/${post.slug}`}
-                      className="transition-colors hover:text-brand"
+                      className="inline-block py-0.5 transition-colors hover:text-brand"
                     >
                       {truncate(post.title, 80)}
                     </Link>
@@ -644,7 +653,7 @@ export async function EventTerbaru({ village, section }: SectionProps) {
                 <h3 className="font-semibold leading-snug">
                   <Link
                     href={`/event/${event.slug}`}
-                    className="transition-colors hover:text-brand"
+                    className="inline-block py-0.5 transition-colors hover:text-brand"
                   >
                     {event.title}
                   </Link>
@@ -940,7 +949,7 @@ export async function UmkmSection({ village, section }: SectionProps) {
               <h3 className="mt-3 font-semibold leading-snug">
                 <Link
                   href={`/umkm/${item.slug}`}
-                  className="transition-colors hover:text-brand"
+                  className="inline-block py-0.5 transition-colors hover:text-brand"
                 >
                   {item.name}
                 </Link>
@@ -994,7 +1003,7 @@ export async function WisataSection({ village, section }: SectionProps) {
               <h3 className="font-semibold leading-snug">
                 <Link
                   href={`/wisata/${item.slug}`}
-                  className="transition-colors hover:text-brand"
+                  className="inline-block py-0.5 transition-colors hover:text-brand"
                 >
                   {item.name}
                 </Link>
@@ -1106,7 +1115,7 @@ export async function LayananSection({ village, section }: SectionProps) {
             <h3 className="font-semibold leading-snug">
               <Link
                 href={`/layanan/${service.slug}`}
-                className="transition-colors hover:text-brand"
+                className="inline-block py-0.5 transition-colors hover:text-brand"
               >
                 {service.name}
               </Link>

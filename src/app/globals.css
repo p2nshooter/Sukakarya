@@ -672,9 +672,22 @@ p {
     scroll-behavior: auto;
   }
 
+  /* Stopping the animation is not enough on its own. The track is a single
+     non-wrapping line roughly three screens wide, sitting in a box with
+     `overflow: hidden`, so with the animation off everything past the first
+     announcement is clipped and there is no way to reach it - the village's
+     announcements become unreadable for exactly the people who asked the
+     browser to calm down. Let it wrap onto as many lines as it needs, and drop
+     the duplicate pass that only existed to make the loop seamless. */
   .marquee-track {
     animation: none;
     min-width: 0;
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .marquee-track > [aria-hidden="true"] {
+    display: none;
   }
 
   .rise-in,
