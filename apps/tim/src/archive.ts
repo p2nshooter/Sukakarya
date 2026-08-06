@@ -206,6 +206,45 @@ export async function writeExport(
 }
 
 /**
+ * Parks a rendered report alongside the exports.
+ *
+ * Optional - a report streams straight to the browser whether or not this runs.
+ * It exists so a team can answer "what did we hand out, and when": the file the
+ * operator downloaded is the file in the bucket, byte for byte.
+ */
+export async function storeReport(
+  env: Env,
+  session: Session,
+  filename: string,
+  body: Uint8Array | string,
+  contentType: string,
+  rows: number,
+  ipHash: string | null,
+): Promise<{ key: string }> {
+  const key = `${EXPORT_PREFIX}/${session.orgId}/${stamp()}-${filename}`;
+
+  await env.ARCHIVE.put(key, body, {
+    httpMetadata: { contentType },
+    customMetadata: {
+      orgId: session.orgId,
+      by: session.email,
+      rows: String(rows),
+    },
+  });
+
+  await audit(env.DB, {
+    orgId: session.orgId,
+    actorId: session.userId,
+    actorEmail: session.email,
+    action: "report.archived",
+    summary: `${rows} baris → ${key}`,
+    ipHash,
+  });
+
+  return { key };
+}
+
+/**
  * Streams an archived object back to an authenticated operator.
  *
  * The key is checked against the caller's own org prefix before the fetch, so a

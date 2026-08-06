@@ -26,5 +26,10 @@
     "**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".open-next", ".next"]
+  // `apps/*` are separate Workers with their own tsconfig and their own CI
+  // typecheck. They run on the Workers runtime with no DOM, so type-checking
+  // them under this project's `lib: ["dom", ...]` resolves globals like
+  // `Response` to the browser declarations and reports errors that do not
+  // exist where the code actually runs.
+  "exclude": ["node_modules", ".open-next", ".next", "apps"]
 }

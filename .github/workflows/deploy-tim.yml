@@ -62,19 +62,49 @@ jobs:
             exit 1
           fi
 
-      # One-off. Prints the database id so it can be written into
-      # apps/tim/wrangler.jsonc, the same way the CMS was provisioned.
+      # Both are safe to re-run: creating a database or bucket that already
+      # exists fails, and that failure is not a reason to stop the deploy.
       - name: Create D1 and R2
         if: inputs.bootstrap
         run: |
-          {
-            echo "## Bootstrap"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          npx wrangler d1 create app-tim-db 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
-          npx wrangler r2 bucket create app-tim-archive 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
-          npx wrangler d1 list --json 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          npx wrangler d1 create app-tim-db || echo "app-tim-db already exists"
+          npx wrangler r2 bucket create app-tim-archive || echo "app-tim-archive already exists"
+
+      # The database id is looked up by name on every run rather than kept in
+      # the committed config. Pasting an id into wrangler.jsonc by hand is the
+      # one step in provisioning that nobody can do from the Actions tab, and
+      # getting it wrong deploys a Worker bound to nothing.
+      - name: Resolve the D1 database id
+        run: |
+          set -euo pipefail
+          id="$(npx wrangler d1 list --json | node -e '
+            let raw = "";
+            process.stdin.on("data", (chunk) => { raw += chunk; });
+            process.stdin.on("end", () => {
+              const list = JSON.parse(raw);
+              const found = list.find((db) => db.name === "app-tim-db");
+              if (!found) { console.error("app-tim-db not found"); process.exit(1); }
+              process.stdout.write(found.uuid || found.id || found.database_id || "");
+            });
+          ')"
+
+          if [ -z "$id" ]; then
+            echo "::error::Database app-tim-db does not exist. Re-run this workflow with the bootstrap option ticked."
+            exit 1
+          fi
+
+          node -e '
+            const fs = require("fs");
+            const path = process.argv[1];
+            const id = process.argv[2];
+            const config = fs.readFileSync(path, "utf8");
+            fs.writeFileSync(
+              path,
+              config.replace(/("database_id"\s*:\s*)"[^"]*"/, `$1"${id}"`),
+            );
+          ' "$CONFIG" "$id"
+
+          echo "Bound app-tim-db (${id})"
 
       # The schema is idempotent (CREATE TABLE IF NOT EXISTS throughout), so
       # re-applying it is safe and never drops a row.
@@ -94,10 +124,6 @@ jobs:
             echo "- D1: \`app-tim-db\`"
             echo "- R2: \`app-tim-archive\` (snapshots and exports)"
             echo ""
-            echo "Create the first operator with:"
-            echo '```'
-            echo "OPERATOR_PASSWORD='...' node apps/tim/scripts/create-operator.mjs \\"
-            echo "  --org 'Tim Contoh' --slug contoh --email admin@contoh.test > op.sql"
-            echo "npx wrangler d1 execute app-tim-db --remote --file=op.sql --config apps/tim/wrangler.jsonc"
-            echo '```'
+            echo "**Next:** run the **Create roster operator** workflow to make the"
+            echo "first account, then sign in at \`/masuk\` on the Worker's URL."
           } >> "$GITHUB_STEP_SUMMARY"

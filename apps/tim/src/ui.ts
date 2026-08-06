@@ -139,6 +139,25 @@ td.num{font-variant-numeric:tabular-nums}
 `;
 
 /* -------------------------------------------------------------------------- */
+/* Notice                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/** A plain error page, for the download route where JSON would be downloaded. */
+export function renderNotice(message: string): string {
+  return `<!doctype html><html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Tidak dapat diproses</title><style>${STYLE}</style></head><body>
+<main style="max-width:520px;margin-top:12vh">
+  <div class="card pad">
+    <h3 style="font-size:17px;margin-bottom:8px">Laporan tidak dapat dibuat</h3>
+    <p style="margin:0 0 16px;color:var(--dim)">${escapeHtml(message)}</p>
+    <a class="btn" href="/">Kembali ke aplikasi</a>
+  </div>
+</main></body></html>`;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Login                                                                       */
 /* -------------------------------------------------------------------------- */
 
@@ -218,7 +237,9 @@ export function renderApp(
   <button class="tab" role="tab" data-v="dasbor" aria-selected="true">Dasbor</button>
   <button class="tab" role="tab" data-v="data" aria-selected="false">Data Anggota</button>
   <button class="tab" role="tab" data-v="rekap" aria-selected="false">Rekap</button>
+  <button class="tab" role="tab" data-v="laporan" aria-selected="false">Laporan &amp; Cetak</button>
   <button class="tab" role="tab" data-v="arsip" aria-selected="false">Arsip &amp; Ekspor</button>
+  ${isAdmin ? '<button class="tab" role="tab" data-v="pengaturan" aria-selected="false">Pengaturan</button>' : ""}
   ${isAdmin ? '<button class="tab" role="tab" data-v="audit" aria-selected="false">Log Audit</button>' : ""}
 </div></nav>
 
@@ -257,6 +278,96 @@ export function renderApp(
       <h3 style="font-size:15px;margin-bottom:12px">Sebaran per TPS</h3><div id="byTps"></div>
     </div></div>
   </section>
+
+  <section id="v-laporan" class="hide">
+    <div class="card pad" style="margin-bottom:16px">
+      <h3 style="font-size:15px;margin-bottom:4px">1. Pilih jenis laporan</h3>
+      <p class="hint" style="margin:0 0 14px">
+        Setiap laporan memakai kop surat dari tab Pengaturan.
+      </p>
+      <div class="grid g2" id="jenis"></div>
+    </div>
+
+    <div class="card pad" style="margin-bottom:16px">
+      <h3 style="font-size:15px;margin-bottom:14px">2. Saring kelompok</h3>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+        <div><label for="l-kadus">Dusun</label>
+          <select id="l-kadus"><option value="">Semua dusun</option></select></div>
+        <div><label for="l-rt">RT</label>
+          <select id="l-rt"><option value="">Semua RT</option></select></div>
+        <div><label for="l-tps">TPS</label>
+          <select id="l-tps"><option value="">Semua TPS</option></select></div>
+        <div><label for="l-jabatan">Jabatan</label>
+          <select id="l-jabatan"><option value="">Semua jabatan</option></select></div>
+        <div><label for="l-status">Status</label>
+          <select id="l-status"><option value="">Semua status</option>
+            <option value="aktif">Aktif</option><option value="calon">Calon</option>
+            <option value="nonaktif">Nonaktif</option></select></div>
+      </div>
+      <p class="hint" style="margin-top:10px">
+        Kosongkan semua saringan untuk mencetak seluruh anggota.
+      </p>
+    </div>
+
+    <div class="card pad hide" id="kegiatanBox" style="margin-bottom:16px">
+      <h3 style="font-size:15px;margin-bottom:14px">3. Keterangan kegiatan</h3>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+        <div><label for="l-kegiatan">Nama kegiatan</label>
+          <input id="l-kegiatan" placeholder="Rapat konsolidasi"></div>
+        <div><label for="l-tanggal">Hari / tanggal</label>
+          <input id="l-tanggal" placeholder="Sabtu, 14 Maret 2026"></div>
+        <div><label for="l-tempat">Tempat</label>
+          <input id="l-tempat" placeholder="Balai Desa"></div>
+      </div>
+    </div>
+
+    <div class="card pad">
+      <h3 style="font-size:15px;margin-bottom:6px">Unduh</h3>
+      <p class="hint" id="lapRingkas" style="margin:0 0 14px"></p>
+      ${
+        isAdmin
+          ? `<label style="display:flex;align-items:center;gap:9px;font-weight:600;margin-bottom:14px">
+        <input type="checkbox" id="l-nik" style="width:auto;margin:0">
+        Sertakan NIK lengkap <span class="hint" style="margin:0;font-weight:400">— tindakan ini dicatat di log audit</span>
+      </label>`
+          : `<p class="note" style="margin-bottom:14px">NIK ditampilkan tersamar
+        (empat digit terakhir). Hanya admin yang dapat mencetak NIK lengkap.</p>`
+      }
+      <label style="display:flex;align-items:center;gap:9px;font-weight:600;margin-bottom:14px">
+        <input type="checkbox" id="l-simpan" style="width:auto;margin:0">
+        Simpan salinan ke Arsip
+        <span class="hint" style="margin:0;font-weight:400">— berkas yang sama ikut tersimpan di R2</span>
+      </label>
+      <div class="bar" style="margin:0">
+        <a class="btn" id="dl-pdf">Unduh PDF</a>
+        <a class="btn sec" id="dl-docx">Unduh Word</a>
+        <a class="btn sec" id="dl-xlsx">Unduh Excel</a>
+        <a class="btn sec" id="dl-csv">Unduh CSV</a>
+        <a class="btn sec" id="dl-html" target="_blank" rel="noopener">Pratinjau &amp; Cetak</a>
+      </div>
+      <p class="hint" style="margin-top:12px">
+        Word dan Excel dapat diedit sebelum ditandatangani. PDF dibuat di server,
+        jadi hasilnya sama di HP maupun komputer.
+      </p>
+    </div>
+  </section>
+
+  ${
+    isAdmin
+      ? `<section id="v-pengaturan" class="hide">
+    <div class="card pad" style="max-width:760px">
+      <h3 style="font-size:15px;margin-bottom:4px">Identitas kop surat</h3>
+      <p class="hint" style="margin:0 0 18px">
+        Dipakai pada semua laporan yang dicetak dan diunduh.
+      </p>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))" id="idForm"></div>
+      <div class="bar" style="margin:18px 0 0">
+        <button class="btn" id="saveId">Simpan Identitas</button>
+      </div>
+    </div>
+  </section>`
+      : ""
+  }
 
   <section id="v-arsip" class="hide">
     <div class="note" style="margin-bottom:16px">
@@ -306,6 +417,7 @@ document.querySelectorAll(".tab").forEach((t)=>{
     $("#v-"+t.dataset.v).classList.remove("hide");
     if(t.dataset.v==="arsip")loadArsip();
     if(t.dataset.v==="audit")loadAudit();
+    if(t.dataset.v==="laporan"||t.dataset.v==="pengaturan")loadLaporan();
   };
 });
 
@@ -483,6 +595,111 @@ const doExport=async function(withNik){
 if($('#exp'))$('#exp').onclick=function(){doExport(false);};
 if($('#expNik'))$('#expNik').onclick=function(){
   if(confirm('Ekspor ini memuat NIK lengkap dan tindakan ini dicatat. Lanjutkan?'))doExport(true);
+};
+
+/* reports */
+// Single-quoted fragments throughout, so the double quotes that belong to the
+// HTML never need escaping inside this inline script.
+var LAP={jenis:'daftar',kinds:[],options:{},identity:{},loaded:false};
+
+var ID_LABEL=[
+  ['team','Nama tim'],['calon','Nama calon'],['periode','Periode'],
+  ['desa','Desa'],['kecamatan','Kecamatan'],['kabupaten','Kabupaten'],
+  ['motto','Motto / semboyan'],['ketua','Nama penandatangan'],
+  ['jabatan_ttd','Jabatan penandatangan']
+];
+
+async function loadLaporan(){
+  if(LAP.loaded){paintLaporan();return;}
+  const d=await api('/api/laporan'); if(!d)return;
+  LAP.kinds=d.kinds; LAP.options=d.options; LAP.identity=d.identity; LAP.loaded=true;
+
+  const fill=function(sel,values,label){
+    const el=$(sel); if(!el)return;
+    el.innerHTML='<option value="">'+label+'</option>'+
+      values.map(function(v){return '<option value="'+esc(v)+'">'+esc(v)+'</option>';}).join('');
+  };
+  fill('#l-kadus',LAP.options.kadus||[],'Semua dusun');
+  fill('#l-rt',LAP.options.rt||[],'Semua RT');
+  fill('#l-tps',LAP.options.tps||[],'Semua TPS');
+  fill('#l-jabatan',LAP.options.jabatan||[],'Semua jabatan');
+
+  if($('#idForm')){
+    $('#idForm').innerHTML=ID_LABEL.map(function(p){
+      return '<div><label for="id-'+p[0]+'">'+p[1]+'</label>'+
+        '<input id="id-'+p[0]+'" data-k="'+p[0]+'" value="'+esc(LAP.identity[p[0]]||'')+'"></div>';
+    }).join('');
+  }
+
+  paintLaporan();
+}
+
+function paintLaporan(){
+  $('#jenis').innerHTML=LAP.kinds.map(function(k){
+    const on=LAP.jenis===k.key;
+    return '<button class="card pad" data-k="'+esc(k.key)+'" style="text-align:left;cursor:pointer;'+
+      'border-color:'+(on?'var(--brand)':'var(--line)')+';'+
+      'box-shadow:'+(on?'0 0 0 3px rgb(13 107 82/.16)':'var(--shadow)')+'">'+
+      '<b style="display:block;font-size:14px;margin-bottom:4px">'+esc(k.title)+'</b>'+
+      '<span class="hint" style="margin:0">'+esc(k.description)+'</span></button>';
+  }).join('');
+
+  document.querySelectorAll('#jenis [data-k]').forEach(function(b){
+    b.onclick=function(){LAP.jenis=b.dataset.k;paintLaporan();};
+  });
+
+  $('#kegiatanBox').classList.toggle('hide',LAP.jenis!=='hadir');
+  refreshLinks();
+}
+
+function lapQuery(format){
+  const p=new URLSearchParams({jenis:LAP.jenis,format:format});
+  [['kadus','#l-kadus'],['rt','#l-rt'],['tps','#l-tps'],
+   ['jabatan','#l-jabatan'],['status','#l-status']].forEach(function(pair){
+    const el=$(pair[1]); if(el&&el.value)p.set(pair[0],el.value);
+  });
+  if(LAP.jenis==='hadir'){
+    [['kegiatan','#l-kegiatan'],['tanggal','#l-tanggal'],['tempat','#l-tempat']]
+      .forEach(function(pair){
+        const el=$(pair[1]); if(el&&el.value)p.set(pair[0],el.value);
+      });
+  }
+  if($('#l-nik')&&$('#l-nik').checked)p.set('nik','1');
+  if($('#l-simpan')&&$('#l-simpan').checked)p.set('simpan','1');
+  if(format==='html')p.set('inline','1');
+  return '/laporan/unduh?'+p.toString();
+}
+
+function refreshLinks(){
+  ['pdf','docx','xlsx','csv','html'].forEach(function(f){
+    const el=$('#dl-'+f); if(el)el.href=lapQuery(f);
+  });
+  const kind=LAP.kinds.filter(function(k){return k.key===LAP.jenis;})[0];
+  const bits=[];
+  [['Dusun','#l-kadus'],['RT','#l-rt'],['TPS','#l-tps'],
+   ['Jabatan','#l-jabatan'],['Status','#l-status']].forEach(function(pair){
+    const el=$(pair[1]); if(el&&el.value)bits.push(pair[0]+' '+el.value);
+  });
+  $('#lapRingkas').textContent=(kind?kind.title:'')+' — '+
+    (bits.length?bits.join(', '):'seluruh anggota')+
+    (($('#l-nik')&&$('#l-nik').checked)?' — memuat NIK lengkap':' — NIK disamarkan');
+}
+
+['#l-kadus','#l-rt','#l-tps','#l-jabatan','#l-status','#l-nik','#l-simpan',
+ '#l-kegiatan','#l-tanggal','#l-tempat'].forEach(function(s){
+  const el=$(s); if(!el)return;
+  el.onchange=refreshLinks; el.oninput=refreshLinks;
+});
+
+if($('#saveId'))$('#saveId').onclick=async function(){
+  const body={};
+  document.querySelectorAll('#idForm [data-k]').forEach(function(el){
+    body[el.dataset.k]=el.value;
+  });
+  try{
+    const r=await api('/api/pengaturan',{method:'POST',body:JSON.stringify(body)});
+    LAP.identity=r.identity; toast('Identitas tersimpan.');
+  }catch(e){toast(e.message,true);}
 };
 
 /* audit */
