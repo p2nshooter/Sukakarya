@@ -150,7 +150,13 @@ export const RESOURCES: ResourceDef[] = [
     revalidate: ["/", "/umkm"],
     fields: [
       { name: "name", label: "Nama Usaha", kind: "text", required: true, inList: true, maxLength: 140 },
-      { name: "slug", label: "Slug URL", kind: "slug", slugFrom: "name", required: true },
+      {
+        name: "slug",
+        label: "Slug URL",
+        kind: "slug",
+        slugFrom: "name",
+        hint: "Kosongkan saja - dibuatkan otomatis dari judul.",
+      },
       { name: "owner_name", label: "Pemilik / Kelompok", kind: "text", inList: true, maxLength: 120 },
       { name: "cover_media_id", label: "Foto Sampul", kind: "media" },
       { name: "logo_media_id", label: "Logo", kind: "media" },
@@ -177,7 +183,13 @@ export const RESOURCES: ResourceDef[] = [
     revalidate: ["/", "/wisata"],
     fields: [
       { name: "name", label: "Nama", kind: "text", required: true, inList: true, maxLength: 140 },
-      { name: "slug", label: "Slug URL", kind: "slug", slugFrom: "name", required: true },
+      {
+        name: "slug",
+        label: "Slug URL",
+        kind: "slug",
+        slugFrom: "name",
+        hint: "Kosongkan saja - dibuatkan otomatis dari judul.",
+      },
       {
         name: "kind",
         label: "Jenis",
@@ -261,7 +273,13 @@ export const RESOURCES: ResourceDef[] = [
     revalidate: ["/", "/download"],
     fields: [
       { name: "title", label: "Judul", kind: "text", required: true, inList: true, maxLength: 160 },
-      { name: "slug", label: "Slug URL", kind: "slug", slugFrom: "title", required: true },
+      {
+        name: "slug",
+        label: "Slug URL",
+        kind: "slug",
+        slugFrom: "title",
+        hint: "Kosongkan saja - dibuatkan otomatis dari judul.",
+      },
       { name: "media_id", label: "Berkas", kind: "media", hint: "Unggah lewat menu Media terlebih dahulu." },
       { name: "external_url", label: "Atau Tautan Eksternal", kind: "text", maxLength: 500 },
       { name: "description", label: "Keterangan", kind: "textarea", span: 2, maxLength: 600 },
@@ -420,7 +438,13 @@ export const RESOURCES: ResourceDef[] = [
     revalidate: ["/", "/event"],
     fields: [
       { name: "title", label: "Judul", kind: "text", required: true, inList: true, maxLength: 200 },
-      { name: "slug", label: "Slug URL", kind: "slug", slugFrom: "title", required: true },
+      {
+        name: "slug",
+        label: "Slug URL",
+        kind: "slug",
+        slugFrom: "title",
+        hint: "Kosongkan saja - dibuatkan otomatis dari judul.",
+      },
       { name: "starts_at", label: "Mulai", kind: "date", required: true, inList: true },
       { name: "ends_at", label: "Selesai", kind: "date" },
       { name: "location", label: "Lokasi", kind: "text", inList: true, maxLength: 200 },
@@ -446,7 +470,13 @@ export const RESOURCES: ResourceDef[] = [
     revalidate: ["/", "/galeri"],
     fields: [
       { name: "title", label: "Judul Album", kind: "text", required: true, inList: true, maxLength: 200 },
-      { name: "slug", label: "Slug URL", kind: "slug", slugFrom: "title", required: true },
+      {
+        name: "slug",
+        label: "Slug URL",
+        kind: "slug",
+        slugFrom: "title",
+        hint: "Kosongkan saja - dibuatkan otomatis dari judul.",
+      },
       {
         name: "kind",
         label: "Jenis",
@@ -481,7 +511,13 @@ export const RESOURCES: ResourceDef[] = [
     revalidate: ["/", "/layanan"],
     fields: [
       { name: "name", label: "Nama Layanan", kind: "text", required: true, inList: true, maxLength: 160 },
-      { name: "slug", label: "Slug URL", kind: "slug", slugFrom: "name", required: true },
+      {
+        name: "slug",
+        label: "Slug URL",
+        kind: "slug",
+        slugFrom: "name",
+        hint: "Kosongkan saja - dibuatkan otomatis dari judul.",
+      },
       { name: "description", label: "Deskripsi Singkat", kind: "textarea", span: 2, maxLength: 500 },
       { name: "requirements", label: "Persyaratan", kind: "html", span: 2 },
       {

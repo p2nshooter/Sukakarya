@@ -31,6 +31,7 @@ export type WriteResult =
 function readField(
   field: ResourceField,
   formData: FormData,
+  deferRequired = false,
 ): { value: string | number | null; error?: string } {
   const raw = formData.get(field.name);
 
@@ -41,7 +42,7 @@ function readField(
   const text = typeof raw === "string" ? raw.trim() : "";
 
   if (!text) {
-    if (field.required) {
+    if (field.required && !deferRequired) {
       return { value: null, error: `${field.label} wajib diisi.` };
     }
     // Numeric columns with a declared default should fall back to it rather
@@ -100,12 +101,57 @@ interface Prepared {
   errors: FieldError[];
 }
 
-function prepare(resource: ResourceDef, formData: FormData): Prepared {
+/**
+ * Finds a free slug for a village by probing the table.
+ *
+ * Two UMKM called "Bakso Malang" is an ordinary situation in one village, and
+ * an operator who never typed a slug should not be shown a uniqueness error
+ * about a column the form filled in for them.
+ *
+ * The table and column come from the resource definition, never from the
+ * request, which is what makes interpolating them here safe.
+ */
+async function freeSlug(
+  resource: ResourceDef,
+  column: string,
+  base: string,
+  villageId: string,
+  excludeId: string | null,
+): Promise<string> {
+  const { results } = await getDb()
+    .prepare(
+      `SELECT ${column} AS slug FROM ${resource.table}
+       WHERE village_id = ? AND ${column} LIKE ? AND id <> ?`,
+    )
+    .bind(villageId, `${base}%`, excludeId ?? "")
+    .all<{ slug: string | null }>();
+
+  const taken = new Set(results.map((row) => row.slug).filter(Boolean));
+  if (!taken.has(base)) return base;
+
+  for (let n = 2; n < 200; n += 1) {
+    const candidate = `${base}-${n}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
+
+async function prepare(
+  resource: ResourceDef,
+  formData: FormData,
+  villageId: string,
+  rowId: string | null,
+): Promise<Prepared> {
   const values: Record<string, string | number | null> = {};
   const errors: FieldError[] = [];
 
   for (const field of resource.fields) {
-    const { value, error } = readField(field, formData);
+    // A slug with a source column is filled in below, so its "required" check
+    // has to wait until the derivation has had a chance to run - otherwise the
+    // rejection fires first and the derivation is unreachable.
+    const derivable = field.kind === "slug" && Boolean(field.slugFrom);
+
+    const { value, error } = readField(field, formData, derivable);
     if (error) {
       errors.push({ field: field.name, message: error });
       continue;
@@ -113,13 +159,27 @@ function prepare(resource: ResourceDef, formData: FormData): Prepared {
     values[field.name] = value;
   }
 
-  // A blank slug is derived from its source column rather than rejected, so an
-  // operator never has to hand-write one.
   for (const field of resource.fields) {
-    if (field.kind !== "slug" || values[field.name]) continue;
+    if (field.kind !== "slug") continue;
+
+    // A slug the operator typed is left exactly as typed, collisions included:
+    // that is a choice they made, and an error is the right answer. Only a
+    // blank one is derived, and only a derived one is made unique.
+    if (values[field.name]) continue;
+
     const source = field.slugFrom ? values[field.slugFrom] : null;
     if (typeof source === "string" && source) {
-      values[field.name] = slugify(source);
+      values[field.name] = await freeSlug(
+        resource,
+        field.name,
+        slugify(source),
+        villageId,
+        rowId,
+      );
+    }
+
+    if (field.required && !values[field.name]) {
+      errors.push({ field: field.name, message: `${field.label} wajib diisi.` });
     }
   }
 
@@ -132,7 +192,7 @@ export async function createRow(
   actorId: string | null,
   formData: FormData,
 ): Promise<WriteResult> {
-  const { values, errors } = prepare(resource, formData);
+  const { values, errors } = await prepare(resource, formData, villageId, null);
   if (errors.length > 0) return { ok: false, errors };
 
   const id = newId(resource.idPrefix);
@@ -170,7 +230,7 @@ export async function updateRow(
   id: string,
   formData: FormData,
 ): Promise<WriteResult> {
-  const { values, errors } = prepare(resource, formData);
+  const { values, errors } = await prepare(resource, formData, villageId, id);
   if (errors.length > 0) return { ok: false, errors };
 
   const assignments = Object.keys(values)
