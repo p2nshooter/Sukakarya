@@ -118,7 +118,7 @@ export function SiteFooter({
                   <IconPhone className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
                   <a
                     href={`tel:${village.phone.replace(/\s/g, "")}`}
-                    className="link-underline"
+                    className="link-underline inline-block py-0.5"
                   >
                     {village.phone}
                   </a>
@@ -129,7 +129,7 @@ export function SiteFooter({
                   <IconMail className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
                   <a
                     href={`mailto:${village.email}`}
-                    className="link-underline break-all"
+                    className="link-underline inline-block break-all py-0.5"
                   >
                     {village.email}
                   </a>
@@ -155,7 +155,7 @@ export function SiteFooter({
                       <li key={item.id}>
                         <Link
                           href={item.url}
-                          className="link-underline text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--text)]"
+                          className="link-underline inline-block py-1 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--text)]"
                         >
                           {item.label}
                         </Link>

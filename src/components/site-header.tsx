@@ -102,7 +102,7 @@ export function SiteHeader({
               {village.phone ? (
                 <a
                   href={`tel:${village.phone.replace(/\s/g, "")}`}
-                  className="flex items-center gap-1.5 transition-colors hover:text-white"
+                  className="flex items-center gap-1.5 py-1 transition-colors hover:text-white"
                 >
                   <IconPhone className="h-3.5 w-3.5 text-brand-accent" />
                   {village.phone}
@@ -111,7 +111,7 @@ export function SiteHeader({
               {show("email") && village.email ? (
                 <a
                   href={`mailto:${village.email}`}
-                  className="flex items-center gap-1.5 transition-colors hover:text-white"
+                  className="flex items-center gap-1.5 py-1 transition-colors hover:text-white"
                 >
                   <IconMail className="h-3.5 w-3.5 text-brand-accent" />
                   {village.email}
