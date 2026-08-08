@@ -11,7 +11,11 @@ on:
   workflow_dispatch:
     inputs:
       seed_baseline:
-        description: "Also apply the baseline seed and demo content (roles, permissions, demo tenant, starter articles and listings). Re-running resets the demo tenant's branding, menus and sections."
+        description: "Apply the baseline seed (roles, permissions, the village row, menus, sections, services, FAQs and the Kepala Desa). Re-running resets branding, menus and sections."
+        type: boolean
+        default: false
+      demo_content:
+        description: "ALSO insert demonstration filler - invented news, businesses, tourism, population figures and budget lines. Leave OFF for a real village: none of it is true."
         type: boolean
         default: false
 
@@ -87,7 +91,7 @@ jobs:
           npx wrangler d1 migrations apply app-desa-db --remote
           npx wrangler d1 execute app-desa-db --remote --file=./db/seed/modules.sql
           npx wrangler d1 execute app-desa-db --remote --file=./db/seed/seed.sql
-          npx wrangler d1 execute app-desa-db --remote --file=./db/seed/demo-content.sql
+          npx wrangler d1 execute app-desa-db --remote --file=./db/seed/base-content.sql
 
           # The object goes up before the row that points at it, so the media
           # route never has a row whose object is missing.
@@ -99,6 +103,14 @@ jobs:
 
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           npx wrangler d1 execute app-desa-db --remote --json \
-            --command "SELECT (SELECT count(*) FROM villages) AS villages, (SELECT count(*) FROM modules) AS modules, (SELECT count(*) FROM posts) AS posts, (SELECT count(*) FROM services) AS services, (SELECT count(*) FROM umkm) AS umkm, (SELECT count(*) FROM page_sections) AS sections" \
+            --command "SELECT (SELECT count(*) FROM villages) AS villages, (SELECT count(*) FROM modules) AS modules, (SELECT count(*) FROM services) AS services, (SELECT count(*) FROM officials) AS officials, (SELECT count(*) FROM faqs) AS faqs, (SELECT count(*) FROM page_sections) AS sections" \
             2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      # Off by default and deliberately a separate step: every row it inserts is
+      # invented, so it must never reach a live village by accident.
+      - name: Apply demonstration filler (invented content - demos only)
+        if: inputs.seed_baseline && inputs.demo_content
+        run: |
+          echo "::warning::Inserting demonstration filler. Every news item, business, tourist site, population figure and budget line below is invented."
+          npx wrangler d1 execute app-desa-db --remote --file=./db/seed/demo-content.sql

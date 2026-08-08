@@ -11,6 +11,7 @@ import { requireVillage } from "@/lib/village";
 
 import { SiteShell } from "@/components/site-shell";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
+import { IconArrowRight } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -57,8 +58,15 @@ export default async function ServicesPage() {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2">
             {services.map((service) => (
-              <Card key={service.id} className="flex flex-col p-5">
-                <h2 className="text-lg font-semibold">{service.name}</h2>
+              <Card key={service.id} interactive className="flex flex-col p-5">
+                <h2 className="text-lg font-semibold">
+                  <Link
+                    href={`/layanan/${service.slug}`}
+                    className="transition-colors hover:text-brand"
+                  >
+                    {service.name}
+                  </Link>
+                </h2>
                 {service.description ? (
                   <p className="mt-1 text-sm text-[var(--text-muted)]">
                     {service.description}
@@ -84,6 +92,17 @@ export default async function ServicesPage() {
                   {service.fee > 0 ? formatCurrency(service.fee) : "Tidak dipungut biaya"}
                   {service.requiresLogin ? " · Perlu masuk akun warga" : ""}
                 </p>
+
+                {/* Without this the catalogue is a dead end: it lists the
+                    requirements for a letter and then offers nothing to press,
+                    even though the form exists one route away. */}
+                <Link
+                  href={`/layanan/${service.slug}`}
+                  className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+                >
+                  Ajukan Surat Ini
+                  <IconArrowRight className="h-4 w-4" />
+                </Link>
               </Card>
             ))}
           </div>
