@@ -88,6 +88,15 @@ jobs:
           npx wrangler d1 execute app-desa-db --remote --file=./db/seed/modules.sql
           npx wrangler d1 execute app-desa-db --remote --file=./db/seed/seed.sql
           npx wrangler d1 execute app-desa-db --remote --file=./db/seed/demo-content.sql
+
+          # The object goes up before the row that points at it, so the media
+          # route never has a row whose object is missing.
+          npx wrangler r2 object put \
+            app-desa-media/officials/kepala-desa-sukakarya.jpg \
+            --file=./db/seed/assets/kepala-desa.jpg \
+            --content-type=image/jpeg --remote
+          npx wrangler d1 execute app-desa-db --remote --file=./db/seed/village-assets.sql
+
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           npx wrangler d1 execute app-desa-db --remote --json \
             --command "SELECT (SELECT count(*) FROM villages) AS villages, (SELECT count(*) FROM modules) AS modules, (SELECT count(*) FROM posts) AS posts, (SELECT count(*) FROM services) AS services, (SELECT count(*) FROM umkm) AS umkm, (SELECT count(*) FROM page_sections) AS sections" \

@@ -17,18 +17,29 @@
 -- Officials
 -- ---------------------------------------------------------------------------
 
+-- Only the office holder whose name is actually known is seeded. The rest of
+-- the perangkat desa and the BPD are added from Admin > Perangkat Desa.
+--
+-- The invented colleagues that used to sit here were fine while this was a
+-- demo tenant, but this is now a real village: publishing a plausible name
+-- against a real public office states something untrue about who holds it,
+-- and a visitor has no way to tell the placeholder from the real entry.
 INSERT INTO officials (id, village_id, full_name, position, unit, bio, sort_order) VALUES
-  ('off_demo_kades', 'vil_demo', 'Sutrisno Hadi', 'Kepala Desa', 'pemerintah_desa',
-   '<p>Selamat datang di situs resmi Desa Demo. Situs ini kami hadirkan sebagai jembatan antara pemerintah desa dan warga: tempat menyampaikan informasi secara terbuka, melayani pengajuan surat tanpa harus antre, dan menerima aspirasi kapan saja.</p><p>Kami percaya pelayanan yang baik dimulai dari keterbukaan. Karena itu anggaran, kegiatan, dan capaian pembangunan kami tampilkan di sini agar dapat diawasi bersama.</p><p>Terima kasih atas kepercayaan dan dukungan warga sekalian.</p>',
-   10),
-  ('off_demo_sekdes', 'vil_demo', 'Ratna Widyaningrum', 'Sekretaris Desa', 'pemerintah_desa', NULL, 20),
-  ('off_demo_kaur_keu', 'vil_demo', 'Bambang Prasetya', 'Kaur Keuangan', 'pemerintah_desa', NULL, 30),
-  ('off_demo_kaur_um', 'vil_demo', 'Siti Maryam', 'Kaur Umum dan Perencanaan', 'pemerintah_desa', NULL, 40),
-  ('off_demo_kasi_pem', 'vil_demo', 'Agus Salim', 'Kasi Pemerintahan', 'pemerintah_desa', NULL, 50),
-  ('off_demo_kasi_kes', 'vil_demo', 'Dewi Lestari', 'Kasi Kesejahteraan', 'pemerintah_desa', NULL, 60),
-  ('off_demo_bpd_ketua', 'vil_demo', 'Hendra Gunawan', 'Ketua BPD', 'bpd', NULL, 10),
-  ('off_demo_bpd_sek', 'vil_demo', 'Nurul Aini', 'Sekretaris BPD', 'bpd', NULL, 20)
-ON CONFLICT (id) DO NOTHING;
+  ('off_demo_kades', 'vil_demo', 'Joni Fahamsyah', 'Kepala Desa', 'pemerintah_desa',
+   '<p>Selamat datang di situs resmi Desa Sukakarya. Situs ini kami hadirkan sebagai jembatan antara pemerintah desa dan warga: tempat menyampaikan informasi secara terbuka, melayani pengajuan surat tanpa harus antre, dan menerima aspirasi kapan saja.</p><p>Kami percaya pelayanan yang baik dimulai dari keterbukaan. Karena itu anggaran, kegiatan, dan capaian pembangunan kami tampilkan di sini agar dapat diawasi bersama.</p><p>Terima kasih atas kepercayaan dan dukungan warga Desa Sukakarya sekalian.</p>',
+   10)
+ON CONFLICT (id) DO UPDATE SET
+  full_name = excluded.full_name,
+  position  = excluded.position,
+  bio       = excluded.bio;
+
+-- Placeholder colleagues from the demo tenant, removed now that the site
+-- carries a real village's name.
+DELETE FROM officials WHERE id IN (
+  'off_demo_sekdes', 'off_demo_kaur_keu', 'off_demo_kaur_um',
+  'off_demo_kasi_pem', 'off_demo_kasi_kes',
+  'off_demo_bpd_ketua', 'off_demo_bpd_sek'
+);
 
 -- ---------------------------------------------------------------------------
 -- Statistics (aggregate only)
@@ -55,7 +66,7 @@ VALUES
   ('pst_demo_1', 'vil_demo', 'news', 'musyawarah-desa-penetapan-apbdes-2026',
    'Musyawarah Desa Tetapkan APBDes 2026',
    'Musyawarah desa yang dihadiri BPD, tokoh masyarakat, dan perwakilan RT menetapkan prioritas anggaran tahun ini pada infrastruktur jalan lingkungan dan penguatan posyandu.',
-   '<p>Pemerintah Desa Demo bersama Badan Permusyawaratan Desa menggelar Musyawarah Desa untuk menetapkan Anggaran Pendapatan dan Belanja Desa tahun anggaran 2026. Musyawarah berlangsung di balai desa dan dihadiri perwakilan seluruh rukun tetangga.</p><p>Dalam forum tersebut disepakati tiga prioritas utama. Pertama, perbaikan jalan lingkungan sepanjang dua kilometer yang menghubungkan Dusun Sukamaju dan Dusun Sukasari. Kedua, penguatan layanan posyandu melalui penambahan alat ukur tumbuh kembang balita. Ketiga, pelatihan kewirausahaan bagi kelompok UMKM desa.</p><p>Ketua BPD menyampaikan bahwa seluruh rincian anggaran akan dipublikasikan melalui situs desa agar dapat diakses dan diawasi warga sepanjang tahun berjalan.</p><p>Pelaksanaan kegiatan dijadwalkan dimulai pada triwulan kedua setelah proses pengadaan selesai.</p>',
+   '<p>Pemerintah Desa Sukakarya bersama Badan Permusyawaratan Desa menggelar Musyawarah Desa untuk menetapkan Anggaran Pendapatan dan Belanja Desa tahun anggaran 2026. Musyawarah berlangsung di balai desa dan dihadiri perwakilan seluruh rukun tetangga.</p><p>Dalam forum tersebut disepakati tiga prioritas utama. Pertama, perbaikan jalan lingkungan sepanjang dua kilometer yang menghubungkan Dusun Sukamaju dan Dusun Sukasari. Kedua, penguatan layanan posyandu melalui penambahan alat ukur tumbuh kembang balita. Ketiga, pelatihan kewirausahaan bagi kelompok UMKM desa.</p><p>Ketua BPD menyampaikan bahwa seluruh rincian anggaran akan dipublikasikan melalui situs desa agar dapat diakses dan diawasi warga sepanjang tahun berjalan.</p><p>Pelaksanaan kegiatan dijadwalkan dimulai pada triwulan kedua setelah proses pengadaan selesai.</p>',
    'cat_demo_pemdes', 'Sekretariat Desa', 'published', 1, datetime('now', '-2 days')),
 
   ('pst_demo_2', 'vil_demo', 'news', 'posyandu-balita-cakupan-imunisasi-meningkat',
@@ -67,7 +78,7 @@ VALUES
   ('pst_demo_3', 'vil_demo', 'news', 'pelatihan-pengemasan-produk-umkm',
    'Pelatihan Pengemasan Produk untuk Pelaku UMKM',
    'Sebanyak 32 pelaku usaha mengikuti pelatihan desain kemasan dan pemasaran digital yang difasilitasi pemerintah desa.',
-   '<p>Sebanyak 32 pelaku usaha mikro di Desa Demo mengikuti pelatihan desain kemasan dan pemasaran digital selama dua hari di balai desa. Pelatihan difasilitasi pemerintah desa bekerja sama dengan pendamping UMKM kecamatan.</p><p>Materi mencakup penyusunan label produk yang memenuhi ketentuan, teknik pemotretan produk sederhana menggunakan telepon genggam, serta pemanfaatan media sosial untuk menjangkau pembeli di luar desa.</p><p>Peserta yang menyelesaikan pelatihan akan didampingi dalam pengurusan izin edar produk pangan olahan.</p>',
+   '<p>Sebanyak 32 pelaku usaha mikro di Desa Sukakarya mengikuti pelatihan desain kemasan dan pemasaran digital selama dua hari di balai desa. Pelatihan difasilitasi pemerintah desa bekerja sama dengan pendamping UMKM kecamatan.</p><p>Materi mencakup penyusunan label produk yang memenuhi ketentuan, teknik pemotretan produk sederhana menggunakan telepon genggam, serta pemanfaatan media sosial untuk menjangkau pembeli di luar desa.</p><p>Peserta yang menyelesaikan pelatihan akan didampingi dalam pengurusan izin edar produk pangan olahan.</p>',
    'cat_demo_umum', 'Kaur Umum', 'published', 0, datetime('now', '-11 days')),
 
   ('pst_demo_4', 'vil_demo', 'news', 'kerja-bakti-normalisasi-saluran-air',
@@ -79,13 +90,13 @@ VALUES
   ('pst_demo_5', 'vil_demo', 'news', 'layanan-surat-online-resmi-dibuka',
    'Layanan Surat Online Resmi Dibuka',
    'Warga kini dapat mengajukan surat keterangan dari rumah dan memantau statusnya menggunakan nomor tiket.',
-   '<p>Pemerintah Desa Demo resmi membuka layanan pengajuan surat secara daring melalui situs desa. Warga dapat mengajukan surat keterangan domisili, surat keterangan usaha, dan surat pengantar tanpa harus datang ke kantor desa terlebih dahulu.</p><p>Setiap pengajuan menerima nomor tiket yang dapat digunakan untuk memantau status melalui menu Lacak Surat. Petugas akan mengabari pemohon melalui kontak yang dicantumkan apabila diperlukan kelengkapan tambahan.</p><p>Surat yang telah selesai tetap diambil di kantor desa pada jam pelayanan.</p>',
+   '<p>Pemerintah Desa Sukakarya resmi membuka layanan pengajuan surat secara daring melalui situs desa. Warga dapat mengajukan surat keterangan domisili, surat keterangan usaha, dan surat pengantar tanpa harus datang ke kantor desa terlebih dahulu.</p><p>Setiap pengajuan menerima nomor tiket yang dapat digunakan untuk memantau status melalui menu Lacak Surat. Petugas akan mengabari pemohon melalui kontak yang dicantumkan apabila diperlukan kelengkapan tambahan.</p><p>Surat yang telah selesai tetap diambil di kantor desa pada jam pelayanan.</p>',
    'cat_demo_pemdes', 'Sekretariat Desa', 'published', 0, datetime('now', '-25 days')),
 
-  ('pst_demo_6', 'vil_demo', 'article', 'profil-sejarah-desa-demo',
-   'Menelusuri Sejarah Desa Demo',
+  ('pst_demo_6', 'vil_demo', 'article', 'profil-sejarah-desa-sukakarya',
+   'Menelusuri Sejarah Desa Sukakarya',
    'Catatan ringkas mengenai asal usul nama, perkembangan wilayah, dan tokoh yang berperan dalam pembentukan desa.',
-   '<p>Desa Demo terbentuk dari penggabungan beberapa permukiman kecil yang tumbuh di sekitar aliran sungai. Nama desa diambil dari sebutan yang digunakan warga terhadap kawasan persawahan di sisi utara.</p><p>Perkembangan wilayah berlangsung bertahap seiring dibukanya jalur penghubung antar kecamatan. Sejak saat itu kegiatan ekonomi warga bergeser dari pertanian subsisten menuju pertanian komersial dan usaha pengolahan hasil.</p><p>Catatan ini disusun dari penuturan tokoh masyarakat dan akan terus dilengkapi.</p>',
+   '<p>Desa Sukakarya terbentuk dari penggabungan beberapa permukiman kecil yang tumbuh di sekitar aliran sungai. Nama desa diambil dari sebutan yang digunakan warga terhadap kawasan persawahan di sisi utara.</p><p>Perkembangan wilayah berlangsung bertahap seiring dibukanya jalur penghubung antar kecamatan. Sejak saat itu kegiatan ekonomi warga bergeser dari pertanian subsisten menuju pertanian komersial dan usaha pengolahan hasil.</p><p>Catatan ini disusun dari penuturan tokoh masyarakat dan akan terus dilengkapi.</p>',
    'cat_demo_umum', 'Sekretariat Desa', 'published', 0, datetime('now', '-40 days'))
 ON CONFLICT (id) DO NOTHING;
 
