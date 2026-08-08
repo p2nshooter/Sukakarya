@@ -1,10 +1,8 @@
--- Baseline seed: roles, permissions, and one demo tenant.
+-- Baseline seed: roles, permissions, and the tenant this deployment serves.
 --
--- Nothing here names a real village. The demo tenant exists so a fresh
--- deployment renders something instead of erroring, and so the layout engine
--- has a working example to copy. Provisioning a real village means inserting
--- another `villages` row (plus its menus and sections) and pointing
--- DEFAULT_VILLAGE_SLUG or a custom domain at it.
+-- The tenant is Desa Sukakarya. Adding a second village means inserting another
+-- `villages` row (plus its menus and sections) and pointing a custom domain or
+-- DEFAULT_VILLAGE_SLUG at it.
 --
 -- Idempotent: safe to re-run.
 
@@ -64,7 +62,18 @@ WHERE r.slug IN ('operator', 'perangkat_desa')
 ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------------
--- Demo tenant
+-- Tenant
+--
+-- Address, telephone, email, kecamatan and kabupaten are deliberately NULL.
+-- They are not known here, and a government site that publishes a plausible
+-- but invented office address or telephone number is worse than one that
+-- publishes none. Every component guards on the value, so an empty column
+-- simply omits its card. Fill them in from Admin > Pengaturan.
+--
+-- The slug stays `demo` on purpose. It is only ever used to resolve the tenant
+-- from DEFAULT_VILLAGE_SLUG and is never shown to a visitor; renaming it would
+-- mean the deployed Worker looks for a slug the database does not yet have,
+-- because the deploy runs on every push while this seed runs on demand.
 -- ---------------------------------------------------------------------------
 
 INSERT INTO villages (
@@ -72,15 +81,25 @@ INSERT INTO villages (
   country, latitude, longitude, map_zoom, address, phone, whatsapp, email,
   primary_color, secondary_color, accent_color, locale, timezone, status
 ) VALUES (
-  'vil_demo', 'demo', NULL, 'Contoh', 'Desa',
-  'Kecamatan Contoh', 'Kabupaten Contoh', 'Jawa Barat',
-  'Indonesia', -6.2500, 107.1500, 14,
-  'Jalan Raya Desa No. 1', '(021) 0000000', '628000000000',
-  'admin@example.test',
+  'vil_demo', 'demo', NULL, 'Sukakarya', 'Desa',
+  NULL, NULL, NULL,
+  'Indonesia', NULL, NULL, 14,
+  NULL, NULL, NULL,
+  NULL,
   '#0d6b52', '#084a39', '#b98a2e', 'id', 'Asia/Jakarta', 'active'
 )
 ON CONFLICT (id) DO UPDATE SET
-  name = excluded.name, updated_at = datetime('now');
+  slug         = excluded.slug,
+  name         = excluded.name,
+  entity_label = excluded.entity_label,
+  district     = excluded.district,
+  regency      = excluded.regency,
+  province     = excluded.province,
+  address      = excluded.address,
+  phone        = excluded.phone,
+  whatsapp     = excluded.whatsapp,
+  email        = excluded.email,
+  updated_at   = datetime('now');
 
 -- ---------------------------------------------------------------------------
 -- Navigation
