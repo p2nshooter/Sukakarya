@@ -70,6 +70,17 @@ jobs:
             fi
           }
 
+          absent() {
+            label="$1"; path="$2"; needle="$3"
+            if curl -sS --max-time 30 "${BASE}${path}" | grep -qF "$needle"; then
+              mark="❌"; got="STILL PRESENT"; failures=$((failures+1))
+            else
+              mark="✅"; got="gone"
+            fi
+            echo "${mark} ${label} - '${needle}' ${got}"
+            echo "| ${label} | \`${needle}\` | ${got} | ${mark} |" >> "$GITHUB_STEP_SUMMARY"
+          }
+
           contains() {
             label="$1"; path="$2"; needle="$3"
             if curl -sS --max-time 30 "${BASE}${path}" | grep -qF "$needle"; then
@@ -113,9 +124,20 @@ jobs:
 
           # The homepage must be showing real content, not a column of empty
           # states - a deploy that renders but has nothing in it is not a pass.
-          contains "Homepage renders news"    "/" "Berita"
           contains "Homepage renders letters" "/" "Ajukan"
           contains "Service form is rendered" "/layanan/surat-keterangan-usaha" "applicantName"
+
+          # The identity the site publishes. These guard against a re-seed
+          # quietly putting the demonstration tenant back on a live village.
+          contains "Village name is Sukakarya"   "/"       "Sukakarya"
+          contains "Kepala Desa is named"        "/profil" "Joni Fahamsyah"
+          contains "Letter catalogue is usable"  "/layanan" "Ajukan Surat Ini"
+
+          # Placeholder contact details would be acted on by a resident, so
+          # their absence is asserted rather than assumed.
+          absent   "No placeholder email"        "/" "example.test"
+          absent   "No placeholder telephone"    "/" "(021) 0000000"
+          absent   "No demo village name"        "/" "Desa Contoh"
 
           echo "" >> "$GITHUB_STEP_SUMMARY"
           if [ "$failures" -ne 0 ]; then
