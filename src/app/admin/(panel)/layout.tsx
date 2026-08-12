@@ -75,6 +75,7 @@ const NAV_GROUPS: {
         label: r.label,
         level: r.level,
       })),
+      { href: "/admin/pengaturan", label: "Pengaturan Desa", level: "admin" as AccessLevel },
       { href: "/admin/tata-letak", label: "Tata Letak", level: "admin" as AccessLevel },
       { href: "/admin/modul", label: "Modul", level: "admin" as AccessLevel },
     ],
