@@ -24,11 +24,12 @@ import {
   percentOf,
   truncate,
 } from "@/lib/format";
-import { mediaUrl } from "@/lib/media";
+import { getMediaById, listMedia, mediaUrl } from "@/lib/media";
 import { filterNav, getMenu } from "@/lib/navigation";
 import { getVillageModules, shouldRender } from "@/lib/modules/registry";
 import { sanitizeHtml } from "@/lib/sanitize";
 
+import { VideoHero } from "@/components/video-hero";
 import { VillageScene } from "@/components/village-scene";
 import {
   Badge,
@@ -82,6 +83,49 @@ function dayParts(iso: string, locale: string, timezone: string) {
     }).format(date);
 
   return { day: fmt({ day: "numeric" }), month: fmt({ month: "short" }) };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Video banner                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The welcome clip that opens the homepage, above the hero.
+ *
+ * It is a section like any other, so an operator can retitle it, hide it, move
+ * it below the hero, or switch the whole module off from Tata Letak - none of
+ * which would be possible if the video were pinned into the page component.
+ *
+ * The clip is chosen by `mediaId` in the section config, and falls back to the
+ * most recently uploaded video in the media library. Replacing the video is
+ * therefore an upload, not a deployment.
+ */
+export async function VideoBanner({ village, section }: SectionProps) {
+  const configuredId = configString(section.config, "mediaId");
+  const video = configuredId
+    ? await getMediaById(configuredId, village.id)
+    : (await listMedia({ villageId: village.id, kind: "video", limit: 1 }))[0];
+
+  if (!video) return null;
+
+  const posterId = configString(section.config, "posterMediaId");
+  const fallbackId = configString(section.config, "webmMediaId");
+  const label =
+    section.title ?? `Video sambutan ${village.entityLabel} ${village.name}`;
+
+  return (
+    <VideoHero
+      src={mediaUrl(video.id)!}
+      fallbackSrc={mediaUrl(fallbackId || null)}
+      poster={mediaUrl(posterId || null)}
+      label={label}
+      description={
+        video.altText ??
+        section.subtitle ??
+        `Video sambutan ${village.entityLabel} ${village.name}.`
+      }
+    />
+  );
 }
 
 /* -------------------------------------------------------------------------- */

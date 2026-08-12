@@ -28,3 +28,82 @@ ON CONFLICT (id) DO UPDATE SET
 UPDATE officials
    SET photo_media_id = 'med_kades_sukakarya'
  WHERE id = 'off_demo_kades' AND village_id = 'vil_demo';
+
+-- ---------------------------------------------------------------------------
+-- Welcome video that opens the homepage
+-- ---------------------------------------------------------------------------
+
+INSERT INTO media (
+  id, village_id, object_key, file_name, mime_type, size_bytes,
+  kind, width, height, alt_text, folder, visibility
+) VALUES (
+  'med_sambutan_video', 'vil_demo',
+  'sambutan/sambutan-desa.mp4', 'sambutan-desa.mp4',
+  'video/mp4', 2663505, 'video', 1280, 720,
+  'Video sambutan Desa Sukakarya: pelayanan desa kini dari genggaman Anda.',
+  '/sambutan', 'public'
+)
+ON CONFLICT (id) DO UPDATE SET
+  object_key = excluded.object_key,
+  size_bytes = excluded.size_bytes,
+  alt_text   = excluded.alt_text;
+
+-- A WebM copy for browsers built without an H.264 decoder. Offered second, so
+-- every phone still gets the MP4.
+INSERT INTO media (
+  id, village_id, object_key, file_name, mime_type, size_bytes,
+  kind, width, height, alt_text, folder, visibility
+) VALUES (
+  'med_sambutan_webm', 'vil_demo',
+  'sambutan/sambutan-desa.webm', 'sambutan-desa.webm',
+  'video/webm', 1964077, 'video', 1280, 720,
+  'Video sambutan Desa Sukakarya (format WebM).',
+  '/sambutan', 'public'
+)
+ON CONFLICT (id) DO UPDATE SET
+  object_key = excluded.object_key,
+  size_bytes = excluded.size_bytes,
+  alt_text   = excluded.alt_text;
+
+-- The still the browser paints before the first frame decodes. Without it the
+-- top of the page is a black rectangle for as long as the network takes.
+INSERT INTO media (
+  id, village_id, object_key, file_name, mime_type, size_bytes,
+  kind, width, height, alt_text, folder, visibility
+) VALUES (
+  'med_sambutan_poster', 'vil_demo',
+  'sambutan/sambutan-desa-poster.jpg', 'sambutan-desa-poster.jpg',
+  'image/jpeg', 185817, 'image', 1280, 720,
+  'Cuplikan pembuka video sambutan Desa Sukakarya.',
+  '/sambutan', 'public'
+)
+ON CONFLICT (id) DO UPDATE SET
+  object_key = excluded.object_key,
+  size_bytes = excluded.size_bytes,
+  alt_text   = excluded.alt_text;
+
+-- Sort order 5 puts it above the hero, which sits at 10. It is an ordinary
+-- section row, so Tata Letak can move, retitle or hide it afterwards.
+INSERT INTO page_sections
+  (id, village_id, page_slug, module_id, title, subtitle, variant, config,
+   visible, sort_order)
+VALUES (
+  'ps_home_video', 'vil_demo', 'home', 'video-banner',
+  'Selamat Datang di Website Resmi Desa Sukakarya',
+  'Pelayanan desa, kini dari genggaman Anda.',
+  'default',
+  '{"mediaId":"med_sambutan_video","webmMediaId":"med_sambutan_webm","posterMediaId":"med_sambutan_poster"}',
+  1, 5
+)
+ON CONFLICT (id) DO UPDATE SET
+  title      = excluded.title,
+  subtitle   = excluded.subtitle,
+  config     = excluded.config,
+  sort_order = excluded.sort_order,
+  visible    = 1;
+
+-- A section is only rendered when its module is switched on for the village,
+-- so the row is written explicitly rather than left to the catalogue default.
+INSERT INTO module_settings (village_id, module_id, enabled, visible, sort_order)
+VALUES ('vil_demo', 'video-banner', 1, 1, 5)
+ON CONFLICT (village_id, module_id) DO UPDATE SET enabled = 1, visible = 1;
