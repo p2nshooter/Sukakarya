@@ -99,6 +99,22 @@ jobs:
             app-desa-media/officials/kepala-desa-sukakarya.jpg \
             --file=./db/seed/assets/kepala-desa.jpg \
             --content-type=image/jpeg --remote
+
+          # The welcome video, its WebM copy for browsers without an H.264
+          # decoder, and the still the page paints while the video loads.
+          npx wrangler r2 object put \
+            app-desa-media/sambutan/sambutan-desa.mp4 \
+            --file=./db/seed/assets/sambutan-desa.mp4 \
+            --content-type=video/mp4 --remote
+          npx wrangler r2 object put \
+            app-desa-media/sambutan/sambutan-desa.webm \
+            --file=./db/seed/assets/sambutan-desa.webm \
+            --content-type=video/webm --remote
+          npx wrangler r2 object put \
+            app-desa-media/sambutan/sambutan-desa-poster.jpg \
+            --file=./db/seed/assets/sambutan-desa-poster.jpg \
+            --content-type=image/jpeg --remote
+
           npx wrangler d1 execute app-desa-db --remote --file=./db/seed/village-assets.sql
 
           echo '```' >> "$GITHUB_STEP_SUMMARY"
