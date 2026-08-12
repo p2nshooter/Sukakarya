@@ -866,15 +866,25 @@ export async function GaleriVideo({ village, section }: SectionProps) {
 }
 
 export async function VideoProfil({ village, section }: SectionProps) {
-  const [item] = await listGalleryItems({
-    villageId: village.id,
-    kind: "video",
-    limit: 1,
-  });
-  const configuredUrl = configString(section.config, "embedUrl");
-  const embed = configuredUrl || item?.embedUrl;
+  // Three sources, most explicit first: a video chosen for this section, an
+  // embed URL, then the newest video in the gallery. The config route is what
+  // makes the section editable - the operator uploads a file in Media and
+  // points the section at it, with no deployment involved.
+  const configuredId = configString(section.config, "mediaId");
+  const chosen = configuredId
+    ? await getMediaById(configuredId, village.id)
+    : null;
 
-  if (!embed && !item?.mediaId) return null;
+  const [item] = chosen
+    ? []
+    : await listGalleryItems({ villageId: village.id, kind: "video", limit: 1 });
+  const embed = configString(section.config, "embedUrl") || item?.embedUrl;
+
+  const fileId = chosen?.id ?? item?.mediaId ?? null;
+  if (!embed && !fileId) return null;
+
+  const posterId = configString(section.config, "posterMediaId");
+  const webmId = configString(section.config, "webmMediaId");
 
   return (
     <Section
@@ -897,12 +907,20 @@ export async function VideoProfil({ village, section }: SectionProps) {
             />
           </div>
         ) : (
+          /* Controls rather than autoplay: this one sits far down the page, so
+             a clip that started itself would be sound and motion the reader
+             never asked for. */
           <video
             controls
             preload="metadata"
+            poster={mediaUrl(posterId || null) ?? undefined}
             className="aspect-video w-full bg-black"
-            src={mediaUrl(item!.mediaId)!}
-          />
+          >
+            <source src={mediaUrl(fileId)!} type="video/mp4" />
+            {webmId ? (
+              <source src={mediaUrl(webmId)!} type="video/webm" />
+            ) : null}
+          </video>
         )}
       </div>
     </Section>

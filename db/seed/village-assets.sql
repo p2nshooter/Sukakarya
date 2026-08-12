@@ -107,3 +107,45 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO module_settings (village_id, module_id, enabled, visible, sort_order)
 VALUES ('vil_demo', 'video-banner', 1, 1, 5)
 ON CONFLICT (village_id, module_id) DO UPDATE SET enabled = 1, visible = 1;
+
+-- ---------------------------------------------------------------------------
+-- Video profil desa
+-- ---------------------------------------------------------------------------
+
+INSERT INTO media (
+  id, village_id, object_key, file_name, mime_type, size_bytes,
+  kind, width, height, alt_text, folder, visibility
+) VALUES
+  ('med_profil_video', 'vil_demo', 'profil/profil-desa.mp4',
+   'profil-desa.mp4', 'video/mp4', 2725326, 'video', 1280, 720,
+   'Video profil Desa Sukakarya.', '/profil', 'public'),
+  ('med_profil_webm', 'vil_demo', 'profil/profil-desa.webm',
+   'profil-desa.webm', 'video/webm', 1529914, 'video', 1280, 720,
+   'Video profil Desa Sukakarya (format WebM).', '/profil', 'public'),
+  ('med_profil_poster', 'vil_demo', 'profil/profil-desa-poster.jpg',
+   'profil-desa-poster.jpg', 'image/jpeg', 122680, 'image', 1280, 720,
+   'Cuplikan pembuka video profil Desa Sukakarya.', '/profil', 'public')
+ON CONFLICT (id) DO UPDATE SET
+  object_key = excluded.object_key,
+  size_bytes = excluded.size_bytes,
+  alt_text   = excluded.alt_text;
+
+-- Sits between the Kepala Desa's welcome (30) and the statistics (40), so the
+-- video follows the greeting rather than interrupting the page.
+INSERT INTO page_sections
+  (id, village_id, page_slug, module_id, title, subtitle, variant, config,
+   visible, sort_order)
+VALUES (
+  'ps_home_video_profil', 'vil_demo', 'home', 'video-profil',
+  'Video Profil Desa Sukakarya', NULL, 'default',
+  '{"mediaId":"med_profil_video","webmMediaId":"med_profil_webm","posterMediaId":"med_profil_poster"}',
+  1, 35
+)
+ON CONFLICT (id) DO UPDATE SET
+  title    = excluded.title,
+  config   = excluded.config,
+  visible  = 1;
+
+INSERT INTO module_settings (village_id, module_id, enabled, visible, sort_order)
+VALUES ('vil_demo', 'video-profil', 1, 1, 35)
+ON CONFLICT (village_id, module_id) DO UPDATE SET enabled = 1, visible = 1;

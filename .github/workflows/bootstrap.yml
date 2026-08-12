@@ -115,6 +115,19 @@ jobs:
             --file=./db/seed/assets/sambutan-desa-poster.jpg \
             --content-type=image/jpeg --remote
 
+          npx wrangler r2 object put \
+            app-desa-media/profil/profil-desa.mp4 \
+            --file=./db/seed/assets/profil-desa.mp4 \
+            --content-type=video/mp4 --remote
+          npx wrangler r2 object put \
+            app-desa-media/profil/profil-desa.webm \
+            --file=./db/seed/assets/profil-desa.webm \
+            --content-type=video/webm --remote
+          npx wrangler r2 object put \
+            app-desa-media/profil/profil-desa-poster.jpg \
+            --file=./db/seed/assets/profil-desa-poster.jpg \
+            --content-type=image/jpeg --remote
+
           npx wrangler d1 execute app-desa-db --remote --file=./db/seed/village-assets.sql
 
           echo '```' >> "$GITHUB_STEP_SUMMARY"
