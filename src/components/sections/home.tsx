@@ -432,7 +432,15 @@ export async function SambutanKepalaDesa({ village, section }: SectionProps) {
 
   return (
     <Section eyebrow="Sambutan" title={section.title ?? "Sambutan Kepala Desa"}>
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,300px)_1fr] lg:gap-14">
+      {/* Centred on the wide layout, not top-aligned. A 4/5 portrait plus the
+          name beneath it stands about 440px tall while a three-paragraph
+          welcome runs closer to 200px, so aligning both to the top hung a
+          quarter of the section as blank paper under the text. Centring splits
+          that gap in two and reads as a portrait with a quote beside it. It
+          also survives the opposite case - a village whose head writes at
+          length - because then the portrait is the shorter side and centres
+          against the text instead. */}
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,300px)_1fr] lg:items-center lg:gap-14">
         <div className="mx-auto w-full max-w-[300px] lg:mx-0">
           <div className="relative">
             {/* Offset brand plate behind the portrait: gives the photograph a
@@ -622,7 +630,7 @@ export async function BeritaTerbaru({ village, section }: SectionProps) {
               priority
             />
           </Link>
-          <div className="flex flex-1 flex-col p-6">
+          <div className="flex flex-1 flex-col p-5">
             <div className="flex flex-wrap items-center gap-2">
               {lead.categoryName ? <Badge>{lead.categoryName}</Badge> : null}
               <span className="text-xs text-[var(--text-muted)]">
@@ -1148,7 +1156,7 @@ export async function ApbdesRingkas({ village, section }: SectionProps) {
           const pct = percentOf(actuals[key], totals[key]);
 
           return (
-            <Card key={key} tone="raised" className="p-6">
+            <Card key={key} tone="raised" className="p-5">
               <p className="text-sm font-medium text-[var(--text-muted)]">
                 {APBDES_LABELS[key]}
               </p>
@@ -1194,7 +1202,7 @@ export async function LayananSection({ village, section }: SectionProps) {
     >
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {services.slice(0, 6).map((service) => (
-          <Card key={service.id} interactive className="flex flex-col p-6">
+          <Card key={service.id} interactive className="flex flex-col p-5">
             <span
               aria-hidden
               className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-brand/10 text-brand"
@@ -1431,7 +1439,7 @@ export async function KontakSection({ village, section }: SectionProps) {
           })}
         </div>
 
-        <div className="brand-mesh flex flex-col justify-center rounded-[var(--radius-card)] border border-[var(--border-strong)] p-7 shadow-[var(--shadow-md)] lg:w-80">
+        <div className="brand-mesh flex flex-col justify-center rounded-[var(--radius-card)] border border-[var(--border-strong)] p-6 shadow-[var(--shadow-md)] lg:w-80">
           <span
             aria-hidden
             className="grid h-11 w-11 place-items-center rounded-xl bg-brand text-[var(--text-on-brand)] shadow-[var(--shadow-brand)]"

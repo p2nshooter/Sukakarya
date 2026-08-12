@@ -72,12 +72,17 @@ export function Section({
          every section, which across fourteen sections put well over two
          thousand pixels of nothing into the page and left each block floating
          alone. Tightened so neighbouring sections read as one document rather
-         than as separate pages stacked. */
+         than as separate pages stacked.
+
+         The header block below was mb-9 for the same reason: two and a quarter
+         rem between a heading and the thing it names is enough air for the two
+         to stop reading as a pair, so the title floated between sections rather
+         than sitting with its own content. */
       className={`py-10 sm:py-14 lg:py-16 ${toneClass} ${className}`}
     >
       <Container>
         {title || eyebrow ? (
-          <div className="mb-9 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
             <div className="max-w-2xl">
               {eyebrow ? (
                 <p className="mb-2.5 flex items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-brand">
@@ -94,7 +99,7 @@ export function Section({
                 </h2>
               ) : null}
               {subtitle ? (
-                <p className="mt-3 text-[0.9375rem] leading-relaxed text-[var(--text-muted)]">
+                <p className="mt-2 text-[0.9375rem] leading-relaxed text-[var(--text-muted)]">
                   {subtitle}
                 </p>
               ) : null}
@@ -112,6 +117,12 @@ export function Section({
 /* Surfaces                                                                    */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Padding is the caller's, not the card's, because a card wrapping a
+ * full-bleed image cannot have any. The house measure is `p-5`; the few
+ * blocks that had drifted to `p-6`/`p-7` were pulled back to it, so cards
+ * sitting in the same grid no longer breathe at different rates.
+ */
 export function Card({
   children,
   className = "",
@@ -151,7 +162,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-[var(--radius-card)] border border-dashed border-[var(--border-strong)] bg-[var(--surface-1)]/60 px-6 py-16 text-center">
+    <div className="rounded-[var(--radius-card)] border border-dashed border-[var(--border-strong)] bg-[var(--surface-1)]/60 px-6 py-10 text-center">
       <div
         aria-hidden
         className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-[var(--surface-2)] text-[var(--text-subtle)]"
