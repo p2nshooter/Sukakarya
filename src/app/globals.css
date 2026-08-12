@@ -667,9 +667,52 @@ p {
    merely shortening it.
    -------------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------------- */
+/* Gallery reveal                                                              */
+/* -------------------------------------------------------------------------- */
+
+/* Cards lift into place as they are scrolled to, and the photograph inside a
+   frame grows a little under the pointer.
+
+   Driven by `animation-timeline: view()` rather than an IntersectionObserver:
+   the whole effect is decoration, and decoration should not cost the visitor a
+   client component, a hydration pass and a scroll listener. Browsers without
+   the timeline simply run the animation once on load, which still looks
+   deliberate and never leaves a card stuck invisible - a reveal that depends on
+   an observer arriving is a reveal that can fail to arrive at all. */
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tile-reveal > * {
+  animation: tile-in 0.6s var(--ease-out-soft) both;
+}
+
+@supports (animation-timeline: view()) {
+  .tile-reveal > * {
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  /* A reveal that never runs must not leave the tile invisible: `both` holds
+     the from-state, so the animation is removed rather than merely paused. */
+  .tile-reveal > * {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 
   /* Stopping the animation is not enough on its own. The track is a single
