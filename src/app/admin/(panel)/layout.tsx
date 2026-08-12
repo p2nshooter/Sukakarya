@@ -65,6 +65,7 @@ const NAV_GROUPS: {
         level: r.level,
       })),
       { href: "/admin/pengaduan", label: "Pengaduan", level: "staff" as AccessLevel },
+      { href: "/admin/registrasi", label: "Pendaftaran Warga", level: "staff" as AccessLevel },
     ],
   },
   {
