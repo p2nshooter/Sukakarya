@@ -46,8 +46,12 @@ jobs:
 
       - run: npm ci
 
+      # The package as well as the browser: `playwright install` only fetches
+      # the binary, so importing "playwright" from a script still fails.
       - name: Install a browser
-        run: npx --yes playwright@1.49.0 install --with-deps chromium
+        run: |
+          npm i --no-save playwright@1.49.0
+          npx playwright install --with-deps chromium
 
       - name: Start the log tail
         run: |
