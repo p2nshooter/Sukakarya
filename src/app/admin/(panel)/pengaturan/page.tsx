@@ -95,6 +95,22 @@ async function saveSettings(formData: FormData) {
     )
     .run();
 
+  // Letters, digits, dash and underscore only: the code becomes a URL segment,
+  // and anything needing escaping there would be typed wrong at least once.
+  const knock = String(formData.get("adminKnock") ?? "")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 48);
+  await getDb()
+    .prepare(
+      `INSERT INTO village_settings (village_id, key, value, value_type, updated_at)
+       VALUES (?, 'site.admin_knock', ?, 'string', ?)
+       ON CONFLICT (village_id, key)
+       DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    )
+    .bind(village.id, knock, new Date().toISOString())
+    .run();
+
   await logAudit({
     villageId: village.id,
     actorId: viewer.userId,
@@ -224,6 +240,7 @@ export default async function AdminSettingsPage({
     getVillageSettings(village.id, "site."),
   ]);
   const demoStamp = settings["site.demo_stamp"] === "1";
+  const adminKnock = settings["site.admin_knock"] ?? "";
 
   return (
     <div className="p-6 lg:p-8">
@@ -321,6 +338,34 @@ export default async function AdminSettingsPage({
               label="Warna Aksen"
               value={village.accentColor}
             />
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-[var(--border)] p-5">
+          <h2 className="font-semibold">Kode Ketuk Panel Admin</h2>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            Selama kode ini terisi, <code>/admin/login</code> menjawab 404 untuk
+            siapa pun yang belum mengetuk. Halaman masuk dibuka lewat{" "}
+            <code>/k/kode-anda</code>, dan terbuka selama 15 menit.
+          </p>
+          <div className="mt-3">
+            <label htmlFor="adminKnock" className="block text-sm font-medium">
+              Kode Ketuk
+            </label>
+            <input
+              id="adminKnock"
+              name="adminKnock"
+              defaultValue={adminKnock}
+              spellCheck={false}
+              autoComplete="off"
+              className={`${field} font-mono`}
+            />
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              Huruf, angka, tanda hubung dan garis bawah. <strong>Kosongkan
+              untuk mematikan</strong> — halaman masuk kembali terbuka seperti
+              biasa. Catat kodenya sebelum menyimpan: tanpa itu Anda ikut
+              terkunci di luar.
+            </p>
           </div>
         </section>
 
