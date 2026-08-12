@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { canAccess } from "@/lib/access";
@@ -128,7 +129,15 @@ export default async function AdminLettersPage() {
               {results.map((request) => (
                 <tr key={request.id} className="border-b border-[var(--border)]">
                   <td className="px-3 py-2">
-                    <code className="text-xs">{request.ticket}</code>
+                    {/* The ticket is the operator's handle on the request, so
+                        it is also the way through to the printable letter. */}
+                    <Link
+                      href={`/admin/surat/${request.id}/cetak`}
+                      className="font-mono text-xs text-brand hover:underline"
+                      title={`Cetak surat ${request.ticket}`}
+                    >
+                      {request.ticket}
+                    </Link>
                   </td>
                   <td className="px-3 py-2">{request.applicant_name}</td>
                   <td className="px-3 py-2">{request.service_name}</td>
