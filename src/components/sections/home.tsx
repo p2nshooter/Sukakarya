@@ -496,13 +496,32 @@ export async function QuickMenu({ village, viewer, section }: SectionProps) {
   );
   if (items.length === 0) return null;
 
+  // Six fixed columns leave a hole whenever a village has fewer than six quick
+  // links - and most do, because the row only shows the modules that village
+  // has switched on. Five tiles then sat in five-sixths of the row with a gap
+  // beside them, which reads as something failed to load rather than as a
+  // deliberate layout. The column count follows the tiles instead.
+  //
+  // Written as whole class names rather than built from a template string:
+  // Tailwind scans the source text, and a class it never sees literally is a
+  // class it never generates.
+  const WIDE: Record<number, string> = {
+    1: "lg:grid-cols-1",
+    2: "lg:grid-cols-2",
+    3: "lg:grid-cols-3",
+    4: "lg:grid-cols-4",
+    5: "lg:grid-cols-5",
+    6: "lg:grid-cols-6",
+  };
+  const wide = WIDE[Math.min(items.length, 6)] ?? "lg:grid-cols-6";
+
   return (
     <Section
       eyebrow="Akses Cepat"
       title={section.title ?? "Layanan Cepat"}
       subtitle={section.subtitle}
     >
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${wide}`}>
         {items.map((item) => (
           <Link
             key={item.id}
