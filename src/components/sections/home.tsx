@@ -28,6 +28,7 @@ import { getMediaById, listMedia, mediaUrl } from "@/lib/media";
 import { filterNav, getMenu } from "@/lib/navigation";
 import { getVillageModules, shouldRender } from "@/lib/modules/registry";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { getVillageSettings } from "@/lib/village";
 
 import { VideoHero } from "@/components/video-hero";
 import { VillageScene } from "@/components/village-scene";
@@ -113,12 +114,19 @@ export async function VideoBanner({ village, section }: SectionProps) {
   const label =
     section.title ?? `Video sambutan ${village.entityLabel} ${village.name}`;
 
+  // A village-level switch rather than a section one: the point of the stamp is
+  // to mark the whole installation as a demonstration, and an operator who
+  // turns it off should not have to remember which sections carried it.
+  const settings = await getVillageSettings(village.id, "site.");
+  const stamp = settings["site.demo_stamp"] === "1" ? "DEMO WEBSITE" : null;
+
   return (
     <VideoHero
       src={mediaUrl(video.id)!}
       fallbackSrc={mediaUrl(fallbackId || null)}
       poster={mediaUrl(posterId || null)}
       label={label}
+      stamp={stamp}
       description={
         video.altText ??
         section.subtitle ??

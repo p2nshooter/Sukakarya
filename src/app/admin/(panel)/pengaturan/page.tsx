@@ -6,7 +6,7 @@ import { getViewer } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { getDb } from "@/lib/env";
 import { listMedia } from "@/lib/media";
-import { requireVillage } from "@/lib/village";
+import { getVillageSettings, requireVillage } from "@/lib/village";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +75,23 @@ async function saveSettings(formData: FormData) {
       colour(formData.get("accentColor"), village.accentColor),
       new Date().toISOString(),
       village.id,
+    )
+    .run();
+
+  // Kept in village_settings rather than a column on villages: it is an
+  // operational flag, not part of the village's identity, and the key/value
+  // table is exactly where per-village switches belong.
+  await getDb()
+    .prepare(
+      `INSERT INTO village_settings (village_id, key, value, value_type, updated_at)
+       VALUES (?, 'site.demo_stamp', ?, 'boolean', ?)
+       ON CONFLICT (village_id, key)
+       DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    )
+    .bind(
+      village.id,
+      formData.get("demoStamp") === "on" ? "1" : "0",
+      new Date().toISOString(),
     )
     .run();
 
@@ -200,9 +217,13 @@ export default async function AdminSettingsPage({
   const params = await searchParams;
   const village = await requireVillage();
 
-  const images = (
-    await listMedia({ villageId: village.id, kind: "image", limit: 100 })
-  ).map((media) => ({ id: media.id, fileName: media.fileName }));
+  const [images, settings] = await Promise.all([
+    listMedia({ villageId: village.id, kind: "image", limit: 100 }).then(
+      (list) => list.map((m) => ({ id: m.id, fileName: m.fileName })),
+    ),
+    getVillageSettings(village.id, "site."),
+  ]);
+  const demoStamp = settings["site.demo_stamp"] === "1";
 
   return (
     <div className="p-6 lg:p-8">
@@ -301,6 +322,26 @@ export default async function AdminSettingsPage({
               value={village.accentColor}
             />
           </div>
+        </section>
+
+        <section className="rounded-xl border border-[var(--border)] p-5">
+          <h2 className="font-semibold">Mode Demo</h2>
+          <label className="mt-3 flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              name="demoStamp"
+              defaultChecked={demoStamp}
+              className="mt-1"
+            />
+            <span>
+              Tampilkan stempel <strong>DEMO WEBSITE</strong> di video pembuka.
+              <span className="mt-1 block text-xs text-[var(--text-muted)]">
+                Nyalakan saat situs ini dipakai untuk memperagakan produk, supaya
+                pengunjung tidak menyangka isinya data desa yang sebenarnya.
+                Matikan sebelum diserahkan ke desa.
+              </span>
+            </span>
+          </label>
         </section>
 
         <button

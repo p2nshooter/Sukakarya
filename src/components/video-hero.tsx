@@ -24,6 +24,7 @@ export function VideoHero({
   poster,
   label,
   description,
+  stamp,
 }: {
   src: string;
   /** WebM copy, offered after the MP4 for browsers built without H.264. */
@@ -31,6 +32,8 @@ export function VideoHero({
   poster: string | null;
   label: string;
   description: string;
+  /** Watermark across the clip, e.g. "DEMO WEBSITE". Hidden when empty. */
+  stamp?: string | null;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -92,6 +95,21 @@ export function VideoHero({
       </video>
 
       <p className="sr-only">{description}</p>
+
+      {stamp ? (
+        /* aria-hidden and pointer-events-none: it is a mark on the picture, not
+           content, and it must never sit between a finger and the controls
+           underneath it. Announcing it to a screen reader on every visit would
+           be noise - the same warning belongs in the page text, not here. */
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+        >
+          <span className="rotate-[-18deg] whitespace-nowrap rounded-lg border-[3px] border-white/70 px-[3vw] py-[1vw] text-[7vw] font-extrabold uppercase tracking-[0.12em] text-white/70 drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] sm:text-[5vw]">
+            {stamp}
+          </span>
+        </div>
+      ) : null}
 
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         {!playing ? (
