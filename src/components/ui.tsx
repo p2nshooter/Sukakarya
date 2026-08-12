@@ -68,7 +68,12 @@ export function Section({
   return (
     <section
       id={id}
-      className={`py-14 sm:py-18 lg:py-22 ${toneClass} ${className}`}
+      /* Was py-14 sm:py-18 lg:py-22 - eleven rem of padding above and below
+         every section, which across fourteen sections put well over two
+         thousand pixels of nothing into the page and left each block floating
+         alone. Tightened so neighbouring sections read as one document rather
+         than as separate pages stacked. */
+      className={`py-10 sm:py-14 lg:py-16 ${toneClass} ${className}`}
     >
       <Container>
         {title || eyebrow ? (
