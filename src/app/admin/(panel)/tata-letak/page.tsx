@@ -80,34 +80,65 @@ async function updateSection(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  if (formData.get("intent") === "delete") {
-    await getDb()
-      .prepare("DELETE FROM page_sections WHERE id = ? AND village_id = ?")
-      .bind(id, village.id)
-      .run();
-  } else {
-    await getDb()
-      .prepare(
-        `UPDATE page_sections
-         SET title = ?, subtitle = ?, visible = ?, sort_order = ?, updated_at = ?
-         WHERE id = ? AND village_id = ?`,
-      )
-      .bind(
-        String(formData.get("title") ?? "").trim() || null,
-        String(formData.get("subtitle") ?? "").trim() || null,
-        formData.get("visible") === "on" ? 1 : 0,
-        Number(formData.get("sortOrder") ?? 0) || 0,
-        new Date().toISOString(),
-        id,
-        village.id,
-      )
-      .run();
-  }
+  await getDb()
+    .prepare(
+      `UPDATE page_sections
+       SET title = ?, subtitle = ?, visible = ?, sort_order = ?, updated_at = ?
+       WHERE id = ? AND village_id = ?`,
+    )
+    .bind(
+      String(formData.get("title") ?? "").trim() || null,
+      String(formData.get("subtitle") ?? "").trim() || null,
+      formData.get("visible") === "on" ? 1 : 0,
+      Number(formData.get("sortOrder") ?? 0) || 0,
+      new Date().toISOString(),
+      id,
+      village.id,
+    )
+    .run();
 
   await logAudit({
     villageId: village.id,
     actorId: viewer.userId,
-    action: formData.get("intent") === "delete" ? "delete" : "update",
+    action: "update",
+    resource: "page_sections",
+    resourceId: id,
+  });
+
+  revalidatePath("/admin/tata-letak");
+  revalidatePath("/");
+}
+
+/**
+ * Deleting is its own action rather than an `intent` branch inside the update.
+ *
+ * It used to be one form with two submit buttons, the second carrying
+ * `name="intent" value="delete"`. A browser sends the submitter's name and
+ * value with a native submission, but a server action form does not: the value
+ * never arrived, `intent` was always null, and every press of Hapus fell
+ * through to the update branch and silently saved the row it was meant to
+ * remove. Nothing errored, so the only symptom was a section that would not go
+ * away.
+ */
+async function deleteSection(formData: FormData) {
+  "use server";
+
+  const viewer = await getViewer();
+  if (!canAccess(viewer, "admin")) redirect("/admin/login");
+
+  const village = await requireVillage();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await getDb()
+    .prepare("DELETE FROM page_sections WHERE id = ? AND village_id = ?")
+    .bind(id, village.id)
+    .run();
+
+  await logAudit({
+    villageId: village.id,
+    actorId: viewer.userId,
+    action: "delete",
     resource: "page_sections",
     resourceId: id,
   });
@@ -203,6 +234,13 @@ export default async function AdminLayoutPage() {
                 key={section.id}
                 className="rounded-xl border border-[var(--border)] p-4"
               >
+                {/* Sibling of the update form, not a child: forms cannot nest.
+                    The Hapus button below reaches it by id, so it can sit in
+                    the same row of controls while belonging to this one. */}
+                <form id={`hapus-${section.id}`} action={deleteSection} className="hidden">
+                  <input type="hidden" name="id" value={section.id} />
+                </form>
+
                 <form action={updateSection} className="grid gap-3 sm:grid-cols-[1fr_1fr_6rem_auto_auto]">
                   <input type="hidden" name="id" value={section.id} />
 
@@ -255,8 +293,7 @@ export default async function AdminLayoutPage() {
                     </button>
                     <button
                       type="submit"
-                      name="intent"
-                      value="delete"
+                      form={`hapus-${section.id}`}
                       className="rounded-md border border-[var(--border)] px-3 py-2 text-xs font-medium text-red-600 hover:border-red-500"
                     >
                       Hapus

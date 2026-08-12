@@ -1,0 +1,108 @@
+name: Diagnose admin login
+
+# Reproduces a real sign-in against the deployed Worker and captures the
+# server-side exception behind it.
+#
+# Why this exists: the admin panel 500s in production but not locally, and the
+# public smoke test cannot see it - smoke is anonymous, so /admin only ever
+# answers it with a redirect. Nothing in CI has ever driven the signed-in path.
+#
+# The password is read from the ADMIN_PASSWORD secret and never printed. The
+# browser runs in the job, and `wrangler tail` records what the Worker threw
+# while it was doing so, which is the part no screenshot can show.
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Account to sign in as"
+        required: true
+        type: string
+      base_url:
+        description: "Site to test"
+        required: false
+        default: "https://app-desa.app-desa.workers.dev"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    name: Sign in and capture the error
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install a browser
+        run: npx --yes playwright@1.49.0 install --with-deps chromium
+
+      - name: Start the log tail
+        run: |
+          # Backgrounded so it is already listening when the browser signs in.
+          npx wrangler tail app-desa --format json > /tmp/tail.log 2>/tmp/tail.err &
+          echo "TAIL_PID=$!" >> "$GITHUB_ENV"
+          sleep 12
+
+      - name: Sign in
+        env:
+          BASE: ${{ inputs.base_url }}
+          EMAIL: ${{ inputs.email }}
+          PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: node scripts/diagnose-login.mjs
+
+      - name: Report what the Worker threw
+        if: always()
+        run: |
+          sleep 8
+          kill "${TAIL_PID}" 2>/dev/null || true
+
+          {
+            echo "### Worker log"
+            echo ""
+            echo '```'
+            # Exceptions and console lines only; the rest is request noise.
+            node -e '
+              const fs = require("fs");
+              const text = fs.existsSync("/tmp/tail.log")
+                ? fs.readFileSync("/tmp/tail.log", "utf8") : "";
+              for (const line of text.split("\n")) {
+                if (!line.trim()) continue;
+                let event;
+                try { event = JSON.parse(line); } catch { continue; }
+                const problems = [...(event.exceptions ?? []),
+                                  ...(event.logs ?? [])];
+                if (problems.length === 0) continue;
+                console.log(event.event?.request?.url ?? "(no url)");
+                for (const p of problems) {
+                  console.log("  ", p.name ?? p.level, "-",
+                    p.message ?? JSON.stringify(p.message ?? p));
+                  if (p.stack) console.log(String(p.stack).split("\n").slice(0, 6).join("\n"));
+                }
+              }
+            ' || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          head -c 2000 /tmp/tail.err || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: login-diagnosis
+          path: |
+            /tmp/tail.log
+            /tmp/shot-*.png
+          if-no-files-found: warn

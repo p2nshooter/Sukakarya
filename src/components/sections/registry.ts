@@ -20,6 +20,7 @@ import {
   SambutanKepalaDesa,
   StatistikPenduduk,
   UmkmSection,
+  VideoBanner,
   VideoProfil,
   WisataSection,
 } from "@/components/sections/home";
@@ -33,6 +34,7 @@ import {
  * change.
  */
 export const SECTION_RENDERERS: Record<string, SectionRenderer> = {
+  "video-banner": VideoBanner,
   "hero-banner": HeroBanner,
   "banner-event": BannerEvent,
   "banner-pengumuman": BannerPengumuman,
