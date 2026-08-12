@@ -73,6 +73,15 @@ jobs:
           sleep 8
           kill "${TAIL_PID}" 2>/dev/null || true
 
+          # To stdout as well as the step summary: the job log is the only copy
+          # readable through the API, and a diagnosis I cannot read back is a
+          # diagnosis that never arrived.
+          echo "===== WORKER LOG BEGIN ====="
+          node scripts/read-tail.mjs /tmp/tail.log || true
+          echo "===== WORKER LOG END ====="
+          echo "raw tail lines: $(wc -l < /tmp/tail.log 2>/dev/null || echo 0)"
+          head -c 1200 /tmp/tail.err || true
+
           {
             echo "### Worker log"
             echo ""
