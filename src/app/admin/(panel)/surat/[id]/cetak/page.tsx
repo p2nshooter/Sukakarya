@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { canAccess } from "@/lib/access";
 import { getViewer } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { mediaUrl } from "@/lib/media";
 import {
   buildLetterValues,
   getLetterForPrint,
@@ -40,6 +41,7 @@ export default async function CetakSuratPage({
   if (!letter) notFound();
 
   const values = await buildLetterValues(letter, village);
+  const logo = mediaUrl(village.logoMediaId);
   const body = letter.letter_template
     ? renderTemplate(letter.letter_template, values)
     : null;
@@ -81,9 +83,79 @@ export default async function CetakSuratPage({
       ) : (
         /* A4 at 96dpi is 210mm wide. The sheet keeps that width on screen too,
            so what the operator reviews is the line breaking they will get on
-           paper - not a wider column that reflows when it prints. */
-        <article className="mx-auto mt-6 max-w-[210mm] whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-white p-[20mm] font-serif text-[11pt] leading-relaxed text-black shadow-[var(--shadow-md)] print:m-0 print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
-          {body}
+           paper - not a wider column that reflows when it prints.
+
+           Letterhead and signature live here rather than inside each template.
+           They are identical on every letter a village sends, so putting them
+           in the template would mean five copies of the same block, and five
+           places to edit when the head of village changes. */
+        <article className="mx-auto mt-6 max-w-[210mm] rounded-xl border border-[var(--border)] bg-white p-[20mm] font-serif text-[11pt] leading-relaxed text-black shadow-[var(--shadow-md)] print:m-0 print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
+          {/* The emblem sits beside the wording, as it does on every surat desa
+              in the country, and comes from the logo the village uploaded in
+              Pengaturan Desa - so a village that installs this script gets its
+              own crest on its own letters without touching any code. */}
+          <header className="flex items-center gap-4 border-b-[3px] border-double border-black pb-3">
+            {logo ? (
+              // Not next/image: the print sheet wants the file at its natural
+              // ratio inside a fixed box, and no optimisation pipeline.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logo}
+                alt=""
+                className="h-[22mm] w-[22mm] shrink-0 object-contain"
+              />
+            ) : null}
+            <div className={`flex-1 text-center ${logo ? "pr-[22mm]" : ""}`}>
+              <p className="text-[13pt] font-bold uppercase leading-tight">
+                Pemerintah {values.kabupaten || values.provinsi || "Kabupaten"}
+              </p>
+              <p className="text-[15pt] font-bold uppercase leading-tight">
+                Pemerintah {values.sebutan_desa} {values.nama_desa}
+              </p>
+              {values.kecamatan ? (
+                <p className="text-[10pt] uppercase">
+                  Kecamatan {values.kecamatan}
+                </p>
+              ) : null}
+              {values.alamat_desa ? (
+                <p className="mt-1 text-[9pt]">{values.alamat_desa}</p>
+              ) : null}
+            </div>
+          </header>
+
+          <div className="mt-6 text-center">
+            <h1 className="text-[12pt] font-bold uppercase underline">
+              {values.jenis_surat}
+            </h1>
+            {/* The number is the operator's to assign from the village's own
+                register; the ticket is printed beside it so the sheet on the
+                desk can always be traced back to the request in the panel. */}
+            <p className="mt-1 text-[10pt]">
+              Nomor:{" "}
+              {values.nomor_surat || `……. / ….. / ${values.nama_desa} / …….`}
+            </p>
+          </div>
+
+          <div className="mt-6 whitespace-pre-wrap">{body}</div>
+
+          <div className="mt-10 flex justify-end">
+            <div className="w-[70mm] text-center">
+              <p>
+                {values.nama_desa}, {values.tanggal_surat}
+              </p>
+              <p>{values.jabatan_kepala_desa}</p>
+              {/* Room for a wet signature and the village stamp. An official
+                  letter is signed on paper; nothing here pretends otherwise. */}
+              <div className="h-[25mm]" />
+              <p className="font-bold underline">
+                {values.nama_kepala_desa || "………………………………"}
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-8 text-[8pt] text-neutral-500">
+            Nomor tiket: {values.nomor_tiket}
+          </p>
         </article>
       )}
 

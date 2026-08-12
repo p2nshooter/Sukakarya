@@ -39,6 +39,13 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # Typecheck cannot see inside a query string. `SELECT lr.created_at`
+      # satisfies a LetterRow interface that declares created_at, and the
+      # mismatch only appears at runtime as a 500 on whichever screen runs it -
+      # which is how the letter print page shipped broken.
+      - name: Check SQL columns against the migrations
+        run: node scripts/check-sql-columns.mjs
+
       - name: Unit tests
         run: npm test
 
