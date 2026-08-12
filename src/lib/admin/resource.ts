@@ -529,6 +529,26 @@ export const RESOURCES: ResourceDef[] = [
         default: "[]",
         hint: 'Contoh: [{"name":"keperluan","label":"Keperluan","type":"text","required":true}]',
       },
+      {
+        name: "letter_template",
+        label: "Naskah Surat",
+        kind: "textarea",
+        span: 2,
+        maxLength: 8000,
+        hint:
+          "Teks surat dengan {{penanda}}. Tersedia: {{nomor_surat}} {{nama_desa}} " +
+          "{{sebutan_desa}} {{kecamatan}} {{kabupaten}} {{provinsi}} {{alamat_desa}} " +
+          "{{nama_kepala_desa}} {{jabatan_kepala_desa}} {{nama_pemohon}} {{kontak_pemohon}} " +
+          "{{tanggal_surat}} {{berlaku_sampai}} {{nomor_tiket}}. Kolom formulir juga " +
+          "bisa dipakai, misalnya {{keperluan}}.",
+      },
+      {
+        name: "valid_days",
+        label: "Masa Berlaku (hari)",
+        kind: "number",
+        default: 0,
+        hint: "0 berarti tidak ada masa berlaku.",
+      },
       { name: "sla_days", label: "Estimasi (hari kerja)", kind: "number", default: 3, inList: true },
       { name: "fee", label: "Biaya", kind: "currency", default: 0 },
       {
