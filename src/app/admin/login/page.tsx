@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import type { Metadata } from "next";
 
@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { getDb } from "@/lib/env";
+import { hasKnocked } from "@/lib/knock";
 import { requireVillage } from "@/lib/village";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,11 @@ interface UserRow {
 
 async function signIn(formData: FormData) {
   "use server";
+
+  const gateVillage = await requireVillage();
+  // The action is gated as well as the page. A form rendered before the code
+  // was set, or kept open in a tab, would otherwise still be a way in.
+  if (!(await hasKnocked(gateVillage.id))) notFound();
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
@@ -108,6 +114,11 @@ export default async function AdminLoginPage({
   if (canAccess(viewer, "staff")) redirect("/admin");
 
   const village = await requireVillage();
+
+  // With a knock code set, this page does not exist to anyone who has not
+  // knocked. 404 rather than a message: a page that says "knock first" has
+  // told a scanner exactly what it needed to know.
+  if (!(await hasKnocked(village.id))) notFound();
 
   return (
     <div className="grid min-h-screen place-items-center bg-[var(--surface-1)] px-4">
