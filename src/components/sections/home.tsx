@@ -432,7 +432,15 @@ export async function SambutanKepalaDesa({ village, section }: SectionProps) {
 
   return (
     <Section eyebrow="Sambutan" title={section.title ?? "Sambutan Kepala Desa"}>
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,300px)_1fr] lg:gap-14">
+      {/* Centred on the wide layout, not top-aligned. A 4/5 portrait plus the
+          name beneath it stands about 440px tall while a three-paragraph
+          welcome runs closer to 200px, so aligning both to the top hung a
+          quarter of the section as blank paper under the text. Centring splits
+          that gap in two and reads as a portrait with a quote beside it. It
+          also survives the opposite case - a village whose head writes at
+          length - because then the portrait is the shorter side and centres
+          against the text instead. */}
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,300px)_1fr] lg:items-center lg:gap-14">
         <div className="mx-auto w-full max-w-[300px] lg:mx-0">
           <div className="relative">
             {/* Offset brand plate behind the portrait: gives the photograph a
