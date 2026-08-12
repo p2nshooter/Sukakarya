@@ -7,7 +7,18 @@ import { newId } from "@/lib/id";
 
 export const SESSION_COOKIE = "desa_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
-const PBKDF2_ITERATIONS = 210_000; // OWASP 2023 guidance for PBKDF2-SHA256
+// 210_000 is the OWASP figure and is what this should be. It cannot be used
+// here: a Worker on the free plan is allowed ~10ms of CPU per request, and
+// 210k rounds of PBKDF2-SHA256 costs hundreds of milliseconds. The runtime
+// killed the isolate mid-request, which is why signing in took 48 seconds and
+// then returned a 500 with no exception in the logs - there was no error to
+// throw, the request was simply stopped.
+//
+// 12_000 fits the budget. It is weaker against an attacker who has stolen the
+// database and is grinding hashes offline, and that trade was accepted
+// deliberately rather than stumbled into. Raise it back the moment the account
+// moves to a paid plan; nothing else has to change.
+const PBKDF2_ITERATIONS = 12_000;
 
 const encoder = new TextEncoder();
 

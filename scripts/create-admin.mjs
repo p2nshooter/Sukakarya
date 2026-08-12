@@ -16,7 +16,7 @@
  */
 import { webcrypto as crypto } from "node:crypto";
 
-const PBKDF2_ITERATIONS = 210_000; // must match src/lib/auth.ts
+const PBKDF2_ITERATIONS = 12_000; // must match src/lib/auth.ts
 
 function arg(name, fallback) {
   const index = process.argv.indexOf(`--${name}`);
