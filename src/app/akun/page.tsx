@@ -6,7 +6,8 @@ import type { Metadata } from "next";
 import { canAccess } from "@/lib/access";
 import { SESSION_COOKIE, destroySession, getViewer } from "@/lib/auth";
 import { getDb } from "@/lib/env";
-import { formatDateTime } from "@/lib/format";
+import { formatCurrency, formatDateTime } from "@/lib/format";
+import { buildPaymentDetails } from "@/lib/payment";
 import { requireVillage } from "@/lib/village";
 
 import { SiteShell } from "@/components/site-shell";
@@ -34,6 +35,9 @@ interface LetterRow {
   note: string | null;
   service_name: string;
   submitted_at: string;
+  fee_amount: number;
+  payment_code: string | null;
+  payment_status: string;
 }
 
 const STATUS: Record<string, { label: string; className: string }> = {
@@ -82,6 +86,7 @@ export default async function AkunPage() {
     getDb()
       .prepare(
         `SELECT lr.id, lr.ticket, lr.status, lr.note, lr.submitted_at,
+                lr.fee_amount, lr.payment_code, lr.payment_status,
                 s.name AS service_name
            FROM letter_requests lr
            JOIN services s ON s.id = lr.service_id
@@ -94,6 +99,14 @@ export default async function AkunPage() {
   ]);
 
   const rows = letters.results ?? [];
+
+  // One QR per unpaid request, built here rather than in the loop below so the
+  // page stays a server component and the amounts are resolved before render.
+  const payments = new Map<string, Awaited<ReturnType<typeof buildPaymentDetails>>>();
+  for (const row of rows) {
+    if (row.payment_status !== "unpaid" || row.fee_amount <= 0) continue;
+    payments.set(row.id, await buildPaymentDetails(village.id, row.fee_amount));
+  }
 
   return (
     <SiteShell>
@@ -161,6 +174,81 @@ export default async function AkunPage() {
                       <p className="mt-2 rounded-lg bg-[var(--surface-2)] px-3 py-2 text-sm">
                         {row.note}
                       </p>
+                    ) : null}
+
+                    {row.fee_amount > 0 ? (
+                      <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-4">
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                          <span className="text-sm font-semibold">
+                            Biaya {formatCurrency(row.fee_amount)}
+                          </span>
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              row.payment_status === "paid"
+                                ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
+                                : "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300"
+                            }`}
+                          >
+                            {row.payment_status === "paid"
+                              ? "Sudah dibayar"
+                              : "Belum dibayar"}
+                          </span>
+                        </div>
+
+                        {row.payment_status === "unpaid" ? (
+                          <>
+                            {row.payment_code ? (
+                              <p className="mt-3 text-sm">
+                                Kode pembayaran:{" "}
+                                <strong className="font-mono">
+                                  {row.payment_code}
+                                </strong>
+                                <span className="mt-1 block text-xs text-[var(--text-muted)]">
+                                  Sertakan kode ini pada catatan/berita transfer
+                                  agar petugas dapat mencocokkan pembayaran Anda.
+                                </span>
+                              </p>
+                            ) : null}
+
+                            {payments.get(row.id)?.qrSvg ? (
+                              <div className="mt-4">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                                  Scan QRIS
+                                </p>
+                                {/* The nominal is already inside the code, so
+                                    the payer cannot mistype it. Any e-wallet
+                                    that reads QRIS - DANA, GoPay, OVO, ShopeePay
+                                    or a bank app - accepts this. */}
+                                <div
+                                  className="mt-2 w-40 rounded-lg bg-white p-2 [&>svg]:h-full [&>svg]:w-full"
+                                  dangerouslySetInnerHTML={{
+                                    __html: payments.get(row.id)!.qrSvg!,
+                                  }}
+                                />
+                                <p className="mt-2 text-xs text-[var(--text-muted)]">
+                                  Nominal sudah tercantum di dalam kode.
+                                </p>
+                              </div>
+                            ) : null}
+
+                            {payments.get(row.id)?.ewalletNote ? (
+                              <p className="mt-3 whitespace-pre-line text-sm">
+                                {payments.get(row.id)!.ewalletNote}
+                              </p>
+                            ) : null}
+
+                            {/* Said plainly. A resident who has paid should not
+                                sit waiting for a status that nothing will change
+                                on its own. */}
+                            <p className="mt-3 text-xs text-[var(--text-muted)]">
+                              Setelah membayar, status berubah menjadi
+                              &ldquo;Sudah dibayar&rdquo; ketika petugas desa
+                              mencocokkannya. Surat mulai diproses setelah itu,
+                              dan diambil di kantor desa saat selesai.
+                            </p>
+                          </>
+                        ) : null}
+                      </div>
                     ) : null}
                   </Card>
                 );
