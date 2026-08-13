@@ -95,6 +95,23 @@ async function saveSettings(formData: FormData) {
     )
     .run();
 
+  // The arms of the regency, for the letterhead. Held as a setting rather than
+  // a column on villages because the emblem belongs to the kabupaten, not to
+  // this village - a second village in the same regency points at the same one.
+  await getDb()
+    .prepare(
+      `INSERT INTO village_settings (village_id, key, value, value_type, updated_at)
+       VALUES (?, 'site.regency_emblem_media_id', ?, 'string', ?)
+       ON CONFLICT (village_id, key)
+       DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    )
+    .bind(
+      village.id,
+      text(formData.get("regencyEmblemMediaId"), 60) ?? "",
+      new Date().toISOString(),
+    )
+    .run();
+
   // Letters, digits, dash and underscore only: the code becomes a URL segment,
   // and anything needing escaping there would be typed wrong at least once.
   const knock = String(formData.get("adminKnock") ?? "")
@@ -241,6 +258,7 @@ export default async function AdminSettingsPage({
   ]);
   const demoStamp = settings["site.demo_stamp"] === "1";
   const adminKnock = settings["site.admin_knock"] ?? "";
+  const regencyEmblem = settings["site.regency_emblem_media_id"] ?? "";
 
   return (
     <div className="p-6 lg:p-8">
@@ -322,6 +340,13 @@ export default async function AdminSettingsPage({
               value={village.faviconMediaId}
               options={images}
               hint="Ikon kecil di tab peramban. Gambar persegi paling rapi."
+            />
+            <MediaPicker
+              name="regencyEmblemMediaId"
+              label="Lambang Kabupaten"
+              value={regencyEmblem}
+              options={images}
+              hint="Tampil di kop surat resmi, bukan di situs. Surat desa dikeluarkan atas nama kabupaten, jadi yang dipakai lambang kabupaten - bukan logo desa."
             />
             <Colour
               name="primaryColor"

@@ -10,7 +10,7 @@ import {
   getLetterForPrint,
   renderTemplate,
 } from "@/lib/surat";
-import { requireVillage } from "@/lib/village";
+import { getVillageSettings, requireVillage } from "@/lib/village";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +41,16 @@ export default async function CetakSuratPage({
   if (!letter) notFound();
 
   const values = await buildLetterValues(letter, village);
-  const logo = mediaUrl(village.logoMediaId);
+
+  // The regency arms, not the village logo. A surat desa in Indonesia is issued
+  // under the kabupaten and carries its lambang; the village's own device is
+  // the site's identity, not the letterhead's. Falls back to the village logo
+  // for a village that has not set the emblem, because a kop with no mark at
+  // all looks more wrong than one carrying the wrong mark.
+  const settings = await getVillageSettings(village.id, "site.");
+  const emblem =
+    mediaUrl(settings["site.regency_emblem_media_id"]?.trim() || null) ??
+    mediaUrl(village.logoMediaId);
   const body = letter.letter_template
     ? renderTemplate(letter.letter_template, values)
     : null;
@@ -91,21 +100,21 @@ export default async function CetakSuratPage({
            places to edit when the head of village changes. */
         <article className="mx-auto mt-6 max-w-[210mm] rounded-xl border border-[var(--border)] bg-white p-[20mm] font-serif text-[11pt] leading-relaxed text-black shadow-[var(--shadow-md)] print:m-0 print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
           {/* The emblem sits beside the wording, as it does on every surat desa
-              in the country, and comes from the logo the village uploaded in
-              Pengaturan Desa - so a village that installs this script gets its
-              own crest on its own letters without touching any code. */}
+              in the country. Both it and the logo it falls back to are chosen
+              in Pengaturan Desa, so a village installing this script gets the
+              right arms on its own letters without touching any code. */}
           <header className="flex items-center gap-4 border-b-[3px] border-double border-black pb-3">
-            {logo ? (
+            {emblem ? (
               // Not next/image: the print sheet wants the file at its natural
               // ratio inside a fixed box, and no optimisation pipeline.
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={logo}
+                src={emblem}
                 alt=""
                 className="h-[22mm] w-[22mm] shrink-0 object-contain"
               />
             ) : null}
-            <div className={`flex-1 text-center ${logo ? "pr-[22mm]" : ""}`}>
+            <div className={`flex-1 text-center ${emblem ? "pr-[22mm]" : ""}`}>
               <p className="text-[13pt] font-bold uppercase leading-tight">
                 Pemerintah {values.kabupaten || values.provinsi || "Kabupaten"}
               </p>
