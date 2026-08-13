@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { Viewer } from "@/lib/access";
+import { canAccess, type Viewer } from "@/lib/access";
 import { mediaUrl } from "@/lib/media";
 import type { ResolvedModule } from "@/lib/modules/registry";
 import { shouldRender } from "@/lib/modules/registry";
@@ -19,6 +19,7 @@ import {
   IconMail,
   IconPhone,
   IconPin,
+  IconUser,
 } from "@/components/icons";
 
 interface SiteHeaderProps {
@@ -99,6 +100,20 @@ export function SiteHeader({
             </div>
 
             <div className="flex shrink-0 items-center gap-5">
+              {/* The resident's own door.
+                  It lives up here rather than in the main bar because that row
+                  already carries ten nav items and two buttons: putting a link
+                  there crushed the brand block until the village's own name
+                  truncated to "Des...". This strip is the utility row and has
+                  space, and the label doubles as a session indicator - it reads
+                  "Akun" only when somebody is actually signed in. */}
+              <Link
+                href={canAccess(viewer, "citizen") ? "/akun" : "/masuk"}
+                className="flex items-center gap-1.5 py-1 font-medium transition-colors hover:text-white"
+              >
+                <IconUser className="h-3.5 w-3.5 text-brand-accent" />
+                {canAccess(viewer, "citizen") ? "Akun Saya" : "Masuk"}
+              </Link>
               {village.phone ? (
                 <a
                   href={`tel:${village.phone.replace(/\s/g, "")}`}
@@ -211,7 +226,11 @@ export function SiteHeader({
                 </Link>
               ) : null}
 
-              <MobileNav items={items} village={village} />
+              <MobileNav
+                items={items}
+                village={village}
+                isCitizen={canAccess(viewer, "citizen")}
+              />
             </div>
           </Container>
         </div>

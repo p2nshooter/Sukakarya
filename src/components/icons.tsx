@@ -115,6 +115,14 @@ export const IconUsers = (p: IconProps) => (
   </Icon>
 );
 
+/** One person, for a single resident's account - IconUsers is a group. */
+export const IconUser = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M5 20a7 7 0 0 1 14 0" />
+  </Icon>
+);
+
 export const IconMegaphone = (p: IconProps) => (
   <Icon {...p}>
     <path d="M4 9v5a2 2 0 0 0 2 2h1l1.5 4h2L9 16h1l8 4V5l-8 4H6a2 2 0 0 0-2 2Z" />

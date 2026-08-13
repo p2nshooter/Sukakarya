@@ -5,6 +5,7 @@ import { canAccess } from "@/lib/access";
 import { getViewer } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { getDb } from "@/lib/env";
+import { newId } from "@/lib/id";
 import { formatDateTime } from "@/lib/format";
 import { deleteMedia } from "@/lib/media";
 import { requireVillage } from "@/lib/village";
@@ -51,21 +52,76 @@ async function decide(formData: FormData) {
 
   const row = await getDb()
     .prepare(
-      `SELECT ktp_media_id FROM resident_registrations
+      `SELECT ktp_media_id, user_id, full_name, contact,
+              password_hash, password_salt
+         FROM resident_registrations
         WHERE id = ? AND village_id = ?`,
     )
     .bind(id, village.id)
-    .first<{ ktp_media_id: string | null }>();
+    .first<{
+      ktp_media_id: string | null;
+      user_id: string | null;
+      full_name: string;
+      contact: string | null;
+      password_hash: string | null;
+      password_salt: string | null;
+    }>();
   if (!row) return;
 
+  // An approval is what creates the account. Until an officer has said yes
+  // there is no login, so uploading a photograph cannot mint one.
+  let userId = row.user_id;
+  if (
+    next === "approved" &&
+    !userId &&
+    row.password_hash &&
+    row.password_salt
+  ) {
+    userId = newId("usr");
+    // The contact doubles as the sign-in name. It is what the applicant typed
+    // and what the officer used to reach them, so it is the one string they are
+    // certain to still have.
+    await getDb()
+      .prepare(
+        `INSERT INTO users
+           (id, village_id, email, full_name, password_hash, password_salt,
+            phone, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'active')`,
+      )
+      .bind(
+        userId,
+        village.id,
+        (row.contact ?? "").trim().toLowerCase() || null,
+        row.full_name,
+        row.password_hash,
+        row.password_salt,
+        row.contact,
+      )
+      .run();
+
+    await getDb()
+      .prepare(
+        `INSERT INTO user_roles (user_id, role_id)
+         VALUES (?, 'rol_warga')
+         ON CONFLICT DO NOTHING`,
+      )
+      .bind(userId)
+      .run();
+  }
+
+  // The credential is cleared either way. Once the account exists the hash
+  // lives on `users`; if the application was refused, a password for an
+  // account that will never exist is only a liability.
   await getDb()
     .prepare(
       `UPDATE resident_registrations
           SET status = ?, reviewed_by = ?, reviewed_at = datetime('now'),
-              ktp_media_id = NULL, updated_at = datetime('now')
+              ktp_media_id = NULL, user_id = ?,
+              password_hash = NULL, password_salt = NULL,
+              updated_at = datetime('now')
         WHERE id = ? AND village_id = ?`,
     )
-    .bind(next, viewer.userId, id, village.id)
+    .bind(next, viewer.userId, userId, id, village.id)
     .run();
 
   // Detached from the row first, then removed from R2 and the media table, so
@@ -78,7 +134,9 @@ async function decide(formData: FormData) {
     action: "update",
     resource: "resident_registrations",
     resourceId: id,
-    summary: `Pendaftaran ${next === "approved" ? "disetujui" : "ditolak"}, foto KTP dihapus`,
+    summary:
+      `Pendaftaran ${next === "approved" ? "disetujui" : "ditolak"}, foto KTP dihapus` +
+      (userId && next === "approved" ? ", akun warga dibuat" : ""),
   });
 
   revalidatePath("/admin/registrasi");

@@ -33,9 +33,12 @@ import {
 export function MobileNav({
   items,
   village,
+  isCitizen = false,
 }: {
   items: NavItem[];
   village: Village;
+  /** Resolved by the server component; this one cannot read the session. */
+  isCitizen?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -152,6 +155,18 @@ export function MobileNav({
               </div>
             );
           })}
+        </div>
+
+        {/* The resident's own door, mirroring the header link that only appears
+            from xl upwards. Without this the account would be unreachable on
+            every phone and most laptops. */}
+        <div className="border-t border-[var(--border)] px-5 py-4">
+          <Link
+            href={isCitizen ? "/akun" : "/masuk"}
+            className="flex items-center justify-center rounded-lg border border-[var(--border-strong)] px-4 py-2.5 text-sm font-semibold"
+          >
+            {isCitizen ? "Akun Saya" : "Masuk Akun Warga"}
+          </Link>
         </div>
 
         {village.phone || village.email ? (
