@@ -139,6 +139,18 @@ jobs:
           absent   "No placeholder telephone"    "/" "(021) 0000000"
           absent   "No demo village name"        "/" "Desa Contoh"
 
+          # Leftovers from automated panel tests.
+          #
+          # The browser tests that exercise Tata Letak rename a section and add
+          # one, using a timestamped title so each run is distinguishable. Run
+          # against the deployed site rather than a local one, those titles are
+          # written to the real database and then render on the real homepage -
+          # a heading reading "Judul uji 1786496072769" above the village's own
+          # banner. Nothing removes them afterwards, so the only thing that
+          # catches it is an assertion here.
+          absent   "No test heading left behind"  "/" "Judul uji"
+          absent   "No test section left behind"  "/" "Bagian diubah"
+
           echo "" >> "$GITHUB_STEP_SUMMARY"
           if [ "$failures" -ne 0 ]; then
             echo "**${failures} check(s) failed.**" >> "$GITHUB_STEP_SUMMARY"
