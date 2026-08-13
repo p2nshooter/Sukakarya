@@ -46,7 +46,7 @@ export default async function GalleryPage() {
         {albums.length > 0 ? (
           <section className="mb-12">
             <h2 className="mb-5 text-xl font-bold">Album</h2>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="tile-reveal grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {albums.map((album) => (
                 <Card key={album.id} className="transition hover:border-brand">
                   <Link href={`/galeri/${album.slug}`}>
@@ -74,7 +74,7 @@ export default async function GalleryPage() {
             {photos.length === 0 ? (
               <EmptyState title="Belum ada foto." />
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="tile-reveal grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {photos.map((photo) => (
                   <Card key={photo.id}>
                     <Thumb
