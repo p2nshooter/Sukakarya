@@ -166,7 +166,7 @@ export function SiteHeader({
                   <Link
                     href={item.url}
                     target={item.target}
-                    className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--surface-2)]"
+                    className="nav-link inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-[var(--surface-2)]"
                   >
                     {item.label}
                     {item.children.length > 0 ? (
@@ -175,7 +175,7 @@ export function SiteHeader({
                   </Link>
 
                   {item.children.length > 0 ? (
-                    <div className="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-200 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                    <div className="nav-menu invisible absolute left-0 top-full z-50 pt-2 opacity-0 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
                       <div className="min-w-60 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-xl)]">
                         {item.children.map((child) => (
                           <Link
@@ -201,7 +201,11 @@ export function SiteHeader({
               {show("pelayanan-online") ? (
                 <Link
                   href="/layanan"
-                  className="ml-1 hidden rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-[var(--text-on-brand)] shadow-[var(--shadow-brand)] transition-colors hover:bg-brand-600 xl:inline-flex"
+                  // `whitespace-nowrap`: the button is the last thing in the
+                  // row, so it is the first to be squeezed, and without this it
+                  // breaks into "Ajukan / Surat" and grows the whole header a
+                  // line taller.
+                  className="ml-1 hidden whitespace-nowrap rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-[var(--text-on-brand)] shadow-[var(--shadow-brand)] transition-colors hover:bg-brand-600 xl:inline-flex"
                 >
                   Ajukan Surat
                 </Link>

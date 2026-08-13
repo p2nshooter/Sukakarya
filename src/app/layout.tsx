@@ -33,10 +33,10 @@ export const dynamic = "force-dynamic";
  * first paint on a font that may still be in flight.
  */
 const display = localFont({
-  src: "./fonts/plus-jakarta-sans-latin.woff2",
+  src: "./fonts/fraunces-latin.woff2",
   // A range, not a list: this is the variable font, and naming the range lets
   // the browser interpolate every weight between rather than snapping to one.
-  weight: "500 800",
+  weight: "400 700",
   style: "normal",
   variable: "--font-display-loaded",
   display: "swap",

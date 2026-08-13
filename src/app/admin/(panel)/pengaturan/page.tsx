@@ -32,6 +32,25 @@ function colour(value: FormDataEntryValue | null, fallback: string): string {
   return HEX.test(text) ? text : fallback;
 }
 
+/**
+ * A coordinate, or null.
+ *
+ * Out-of-range values are dropped rather than clamped: a latitude of 200 is a
+ * typo, and silently turning it into 90 would put the village office in the
+ * Arctic and look deliberate.
+ */
+function coord(
+  value: FormDataEntryValue | null,
+  limit: number,
+  fallback: number | null,
+): number | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const parsed = Number(raw.replace(",", "."));
+  if (!Number.isFinite(parsed) || Math.abs(parsed) > limit) return fallback;
+  return parsed;
+}
+
 function text(value: FormDataEntryValue | null, max: number): string | null {
   const trimmed = String(value ?? "").trim().slice(0, max);
   return trimmed || null;
@@ -53,6 +72,7 @@ async function saveSettings(formData: FormData) {
       `UPDATE villages
           SET name = ?, entity_label = ?, district = ?, regency = ?,
               province = ?, address = ?, phone = ?, whatsapp = ?, email = ?,
+              latitude = ?, longitude = ?, map_zoom = ?,
               logo_media_id = ?, favicon_media_id = ?,
               primary_color = ?, secondary_color = ?, accent_color = ?,
               updated_at = ?
@@ -68,6 +88,9 @@ async function saveSettings(formData: FormData) {
       text(formData.get("phone"), 40),
       text(formData.get("whatsapp"), 40),
       text(formData.get("email"), 160),
+      coord(formData.get("latitude"), 90, village.latitude),
+      coord(formData.get("longitude"), 180, village.longitude),
+      Math.min(19, Math.max(3, Number(formData.get("mapZoom")) || village.mapZoom)),
       text(formData.get("logoMediaId"), 60),
       text(formData.get("faviconMediaId"), 60),
       colour(formData.get("primaryColor"), village.primaryColor),
@@ -307,6 +330,8 @@ export default async function AdminSettingsPage({
           <p className="mt-1 text-xs text-[var(--text-muted)]">
             Tampil di situs publik. Kosongkan yang belum ada — lebih baik kosong
             daripada nomor yang salah, karena warga benar-benar meneleponnya.
+            Peta di beranda tidak muncul sampai titiknya diisi: pin yang
+            ditebak akan dibaca warga sebagai alamat.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Text name="address" label="Alamat Kantor" value={village.address} />
@@ -318,6 +343,26 @@ export default async function AdminSettingsPage({
               hint="Format 628xxxxxxxxxx."
             />
             <Text name="email" label="Email" value={village.email} type="email" />
+            <Text
+              name="latitude"
+              label="Titik Peta — Lintang"
+              value={village.latitude === null ? null : String(village.latitude)}
+              hint="Contoh: -6.2419. Buka kantor desa di Google Maps, klik kanan titiknya, lalu salin angka pertama."
+            />
+            <Text
+              name="longitude"
+              label="Titik Peta — Bujur"
+              value={
+                village.longitude === null ? null : String(village.longitude)
+              }
+              hint="Angka kedua dari koordinat yang sama. Contoh: 107.1523."
+            />
+            <Text
+              name="mapZoom"
+              label="Perbesaran Peta"
+              value={String(village.mapZoom)}
+              hint="3 sampai 19. 15 menampilkan kantor desa dan sekitarnya."
+            />
           </div>
         </section>
 
