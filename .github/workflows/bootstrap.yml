@@ -100,6 +100,16 @@ jobs:
             --file=./db/seed/assets/kepala-desa.jpg \
             --content-type=image/jpeg --remote
 
+          # The village logo (site identity) and the regency arms (letterhead).
+          npx wrangler r2 object put \
+            app-desa-media/branding/logo-desa-sukakarya.png \
+            --file=./db/seed/assets/logo-desa-sukakarya.png \
+            --content-type=image/png --remote
+          npx wrangler r2 object put \
+            app-desa-media/branding/lambang-kabupaten-bekasi.png \
+            --file=./db/seed/assets/lambang-kabupaten-bekasi.png \
+            --content-type=image/png --remote
+
           # The welcome video, its WebM copy for browsers without an H.264
           # decoder, and the still the page paints while the video loads.
           npx wrangler r2 object put \
