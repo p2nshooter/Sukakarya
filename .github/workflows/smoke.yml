@@ -151,6 +151,23 @@ jobs:
           absent   "No test heading left behind"  "/" "Judul uji"
           absent   "No test section left behind"  "/" "Bagian diubah"
 
+          # Things that are shipped in the repository but only reach the live
+          # site through a migration or a deploy step. Each of these has already
+          # been "done" once in a way that never actually appeared in
+          # production, so the live site is asked directly rather than trusted.
+          contains "Regency is published"   "/" "Kabupaten Bekasi"
+          contains "Village crest is served" "/" "med_logo_desa"
+
+          # Everything the village office actually put on the site. All of it
+          # arrives through db/seed/village-assets.sql, which only the bootstrap
+          # workflow runs - so nothing here is guaranteed by a deploy, and the
+          # only way to know whether it is still live is to ask the live site.
+          # Twice now something was "shipped" that production never received;
+          # these turn the third time into a red run instead of a discovery.
+          contains "Kepala Desa photo is served" "/" "med_kades_sukakarya"
+          contains "Welcome video is served"     "/" "med_sambutan_video"
+          contains "Profile video is served"     "/" "med_profil_video"
+
           echo "" >> "$GITHUB_STEP_SUMMARY"
           if [ "$failures" -ne 0 ]; then
             echo "**${failures} check(s) failed.**" >> "$GITHUB_STEP_SUMMARY"

@@ -76,6 +76,19 @@ ON CONFLICT DO NOTHING;
 -- because the deploy runs on every push while this seed runs on demand.
 -- ---------------------------------------------------------------------------
 
+-- ---------------------------------------------------------------------------
+-- READ THIS BEFORE CHANGING A VALUE BELOW.
+--
+-- This file is run ONLY by the bootstrap workflow, never by a deploy, and its
+-- ON CONFLICT clauses overwrite name, address, phone and email - so it must not
+-- be added to the deploy either, or it would quietly undo whatever an operator
+-- typed into Pengaturan Desa.
+--
+-- Changing a value here therefore fixes fresh installs and nothing else. To
+-- reach a village that is already live, write a migration that fills the column
+-- only when it is still unset (see 0007).
+-- ---------------------------------------------------------------------------
+
 INSERT INTO villages (
   id, slug, domain, name, entity_label, district, regency, province,
   country, latitude, longitude, map_zoom, address, phone, whatsapp, email,

@@ -7,6 +7,26 @@
 --
 -- Applied separately from demo-content.sql because these are the real village's
 -- assets, not demonstration filler.
+--
+-- ---------------------------------------------------------------------------
+-- READ THIS BEFORE ADDING A ROW HERE.
+--
+-- This file is run ONLY by the bootstrap workflow. The deploy runs migrations
+-- and modules.sql, and nothing else. So a row added here reaches a village that
+-- is already live only if somebody re-runs bootstrap - and bootstrap also
+-- re-seeds branding, menus and page sections, which means asking an operator to
+-- lose their layout to gain whatever you just added.
+--
+-- In practice that means: a row added here alone will not appear in production.
+-- This has already happened twice - the village's regency, then the village
+-- crest - and both times it looked finished and was not.
+--
+-- If the change has to reach a village that is already running, write a
+-- migration for it (see 0007 and 0008) and keep this file as the path for a
+-- fresh install. If the change is bytes rather than rows, the deploy needs an
+-- `r2 object put` step too; the object must go up before the row that points
+-- at it, or the media route serves a 404.
+-- ---------------------------------------------------------------------------
 
 INSERT INTO media (
   id, village_id, object_key, file_name, mime_type, size_bytes,
