@@ -151,6 +151,13 @@ jobs:
           absent   "No test heading left behind"  "/" "Judul uji"
           absent   "No test section left behind"  "/" "Bagian diubah"
 
+          # Things that are shipped in the repository but only reach the live
+          # site through a migration or a deploy step. Each of these has already
+          # been "done" once in a way that never actually appeared in
+          # production, so the live site is asked directly rather than trusted.
+          contains "Regency is published"   "/" "Kabupaten Bekasi"
+          contains "Village crest is served" "/" "med_logo_desa"
+
           echo "" >> "$GITHUB_STEP_SUMMARY"
           if [ "$failures" -ne 0 ]; then
             echo "**${failures} check(s) failed.**" >> "$GITHUB_STEP_SUMMARY"

@@ -54,6 +54,29 @@ jobs:
             exit 1
           fi
 
+      # Branding objects go up before the migration that points rows at them.
+      # A media row whose object is missing serves a 404, so the order matters -
+      # and `r2 object put` overwrites the same key every time, which makes
+      # re-running this on every deploy a no-op rather than a duplicate.
+      #
+      # These live here rather than only in bootstrap.yml because bootstrap also
+      # re-seeds branding, menus and sections. A village that wanted its crest
+      # would have had to accept its layout being reset to get it, which is not
+      # a trade worth offering.
+      - name: Upload branding assets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler r2 object put \
+            app-desa-media/branding/logo-desa-sukakarya.png \
+            --file=./db/seed/assets/logo-desa-sukakarya.png \
+            --content-type=image/png --remote
+          npx wrangler r2 object put \
+            app-desa-media/branding/lambang-kabupaten-bekasi.png \
+            --file=./db/seed/assets/lambang-kabupaten-bekasi.png \
+            --content-type=image/png --remote
+
       # First step that actually talks to Cloudflare, so it is where a
       # misscoped token surfaces. Translate the API's opaque 7403 into the two
       # things that actually cause it.
