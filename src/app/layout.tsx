@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 
 import "./globals.css";
 
@@ -11,29 +11,41 @@ export const dynamic = "force-dynamic";
 /**
  * Typography.
  *
- * Both faces are fetched at build time and served from our own origin as static
- * assets, so a page never makes a request to Google at runtime. That keeps the
- * Worker self-contained, removes a third-party dependency from the render path,
- * and means no visitor's IP is handed to a font CDN.
- *
  * Plus Jakarta Sans carries the headings: it was commissioned as the typeface
  * for Jakarta's city identity, so an Indonesian civic site is exactly what it
  * was drawn for. Inter runs the body text, where its larger x-height and open
  * apertures hold up better at small sizes on low-DPI screens.
  *
+ * The files are committed to this repository rather than fetched by
+ * `next/font/google`. That loader downloads from fonts.gstatic.com *during the
+ * build*, and a build that reaches the network is a build that fails when the
+ * network says no: CI failed two of three consecutive pushes with
+ * `Failed to fetch font file`, each time on a different weight. Anyone who
+ * takes this script and builds it behind a firewall, or on a bad connection,
+ * would hit the same wall with no obvious cause.
+ *
+ * Both are the latin subset of the variable font, so one file per family
+ * covers every weight used - 48KB and 27KB respectively. Both are licensed
+ * under the SIL Open Font License, which permits redistribution; the licence
+ * travels with them in fonts/OFL.txt.
+ *
  * `display: "swap"` shows the fallback immediately rather than blocking the
  * first paint on a font that may still be in flight.
  */
-const display = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+const display = localFont({
+  src: "./fonts/plus-jakarta-sans-latin.woff2",
+  // A range, not a list: this is the variable font, and naming the range lets
+  // the browser interpolate every weight between rather than snapping to one.
+  weight: "500 800",
+  style: "normal",
   variable: "--font-display-loaded",
   display: "swap",
 });
 
-const body = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const body = localFont({
+  src: "./fonts/inter-latin.woff2",
+  weight: "400 700",
+  style: "normal",
   variable: "--font-sans-loaded",
   display: "swap",
 });
