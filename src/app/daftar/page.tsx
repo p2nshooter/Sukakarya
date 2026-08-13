@@ -9,6 +9,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { requireVillage } from "@/lib/village";
 
 import { SiteShell } from "@/components/site-shell";
+import { Panduan } from "@/components/panduan";
 import { PageHeader } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -152,6 +153,45 @@ export default async function DaftarPage({
           { label: "Pendaftaran", href: "/daftar" },
         ]}
       />
+
+      {/* The guide sits above the form, not beside it. Someone photographing
+          their identity card wants to know what happens to it before they are
+          asked to hand it over, and a column of instructions next to a column
+          of inputs is read as decoration. */}
+      <div className="mx-auto max-w-2xl px-4 pt-10">
+        <h2 className="font-display text-xl font-bold">Cara Mendaftar</h2>
+        <p className="mt-1.5 text-[0.9375rem] text-[var(--text-muted)]">
+          Empat langkah, sekitar dua menit. Tidak perlu datang ke kantor desa.
+        </p>
+        <Panduan
+          className="mt-6"
+          steps={[
+            {
+              title: "Siapkan KTP asli",
+              body: `Pastikan KTP Anda tercatat di ${village.entityLabel} ${village.name}${where ? `, ${where}` : ""}. Pendaftaran ditolak jika KTP tercatat di wilayah lain.`,
+            },
+            {
+              title: "Potret kartunya",
+              body: "Letakkan KTP di permukaan rata dengan cahaya cukup. Seluruh kartu harus masuk dalam bingkai dan tulisannya terbaca. Hindari pantulan cahaya dan bayangan tangan.",
+            },
+            {
+              title: "Isi nama dan kontak",
+              body: "Nama sesuai KTP, dan nomor WhatsApp atau email yang aktif. Petugas memakai kontak ini untuk mengabari hasil pendaftaran Anda.",
+            },
+            {
+              title: "Kirim, lalu tunggu dihubungi",
+              body: "Foto dibaca otomatis untuk mencocokkan wilayah, lalu diperiksa petugas desa. Kartu yang kurang jelas tetap kami terima dan diperiksa manual — Anda tidak perlu mengulang dari awal.",
+              aside: (
+                <p>
+                  <strong>Yang tidak kami simpan:</strong> nomor NIK Anda. Yang
+                  tersimpan hanya sidik pengaman dan empat digit terakhir, dan
+                  foto KTP yang hanya dapat dilihat petugas desa.
+                </p>
+              ),
+            },
+          ]}
+        />
+      </div>
 
       <div className="mx-auto max-w-2xl px-4 py-10">
         {params.ok ? (

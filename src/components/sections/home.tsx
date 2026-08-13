@@ -32,6 +32,7 @@ import { getVillageSettings } from "@/lib/village";
 
 import { VideoHero } from "@/components/video-hero";
 import { VillageScene } from "@/components/village-scene";
+import { VillageMap } from "@/components/village-map";
 import {
   Badge,
   ButtonLink,
@@ -1323,25 +1324,21 @@ export async function FaqSection({ village, section }: SectionProps) {
 }
 
 export async function MapsSection({ village, section }: SectionProps) {
+  // No coordinates, no map. Guessing a point for a village office is worse than
+  // showing nothing: a pin on a government site is read as an address, and the
+  // person who follows it to the wrong place has been sent there by us.
   if (village.latitude === null || village.longitude === null) return null;
 
-  const bbox = 0.02;
-  const src =
-    `https://www.openstreetmap.org/export/embed.html?bbox=` +
-    `${village.longitude - bbox}%2C${village.latitude - bbox}%2C` +
-    `${village.longitude + bbox}%2C${village.latitude + bbox}` +
-    `&layer=mapnik&marker=${village.latitude}%2C${village.longitude}`;
+  const region = [village.district, village.regency].filter(Boolean).join(", ");
 
   return (
     <Section eyebrow="Lokasi" title={section.title ?? "Peta Lokasi"}>
-      <div className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--border)] shadow-[var(--shadow-md)]">
-        <iframe
-          title={`Peta ${village.entityLabel} ${village.name}`}
-          src={src}
-          loading="lazy"
-          className="aspect-[16/7] w-full border-0"
-        />
-      </div>
+      <VillageMap
+        latitude={village.latitude}
+        longitude={village.longitude}
+        zoom={village.mapZoom}
+        label={`Peta Kantor ${village.entityLabel} ${village.name}${region ? `, ${region}` : ""}`}
+      />
     </Section>
   );
 }

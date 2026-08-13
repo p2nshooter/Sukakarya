@@ -10,6 +10,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import { requireVillage } from "@/lib/village";
 
 import { SiteShell } from "@/components/site-shell";
+import { Panduan } from "@/components/panduan";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { IconArrowRight } from "@/components/icons";
 
@@ -37,6 +38,53 @@ export default async function ServicesPage() {
           { label: "Layanan", href: "/layanan" },
         ]}
       />
+
+      {/* How the whole thing works, before the catalogue. A resident who has
+          never asked for a surat online does not know whether they will have to
+          come to the office anyway, or how long it takes - and that uncertainty
+          is what sends them to the office instead of the form. */}
+      <div className="mx-auto max-w-5xl px-4 pt-10">
+        <h2 className="font-display text-xl font-bold">
+          Cara Mengajukan Surat
+        </h2>
+        <p className="mt-1.5 text-[0.9375rem] text-[var(--text-muted)]">
+          Lima langkah. Tanpa akun, tanpa antre.
+        </p>
+        <Panduan
+          className="mt-6 max-w-2xl"
+          steps={[
+            {
+              title: "Pilih jenis suratnya",
+              body: "Setiap layanan di bawah mencantumkan persyaratan, perkiraan waktu selesai, dan biayanya. Buka yang Anda butuhkan.",
+            },
+            {
+              title: "Baca persyaratannya lebih dulu",
+              body: "Siapkan berkas yang diminta — biasanya fotokopi KTP dan Kartu Keluarga. Berkas fisik tetap dibawa saat mengambil surat.",
+            },
+            {
+              title: "Isi formulir pengajuan",
+              body: "Nama, kontak yang bisa dihubungi, dan keperluan surat. Data ini hanya dapat dilihat petugas desa dan tidak pernah tampil di halaman publik.",
+            },
+            {
+              title: "Simpan nomor tiket Anda",
+              body: "Setelah mengirim, Anda menerima nomor tiket. Catat atau potret layarnya — nomor itu satu-satunya cara memantau status pengajuan.",
+              aside: (
+                <p>
+                  Pantau kapan saja lewat menu{" "}
+                  <Link href="/layanan/lacak" className="font-semibold text-brand hover:underline">
+                    Lacak Surat
+                  </Link>
+                  . Petugas juga menghubungi Anda bila ada berkas yang kurang.
+                </p>
+              ),
+            },
+            {
+              title: "Ambil surat di kantor desa",
+              body: "Surat yang sudah selesai ditandatangani Kepala Desa dan diambil pada jam pelayanan. Bawa berkas asli untuk dicocokkan.",
+            },
+          ]}
+        />
+      </div>
 
       <div className="mx-auto max-w-5xl px-4 py-10">
         {trackingEnabled ? (

@@ -36,7 +36,7 @@
   /* The -loaded variables are injected by next/font on <html>. Naming them
      separately means a missing font falls through to the system stack instead
      of resolving to nothing. */
-  --font-display: var(--font-display-loaded), "Plus Jakarta Sans", ui-sans-serif,
+  --font-display: var(--font-display-loaded), "Fraunces", Georgia, ui-serif,
     system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-sans: var(--font-sans-loaded), "Inter", ui-sans-serif, system-ui,
     -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -702,6 +702,124 @@ p {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/* Navigation                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/* A rule that grows from the centre under the item being pointed at, in the
+   village's own two colours. The background tint alone said "this is hoverable"
+   and nothing more; the rule gives the header a deliberate feel and, because it
+   also draws under the current page, tells you where you are without a second
+   visual device. */
+.nav-link {
+  position: relative;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0.7rem;
+  bottom: 0.3rem;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--color-brand),
+    var(--color-brand-accent)
+  );
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.34s var(--ease-out-soft);
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after,
+.nav-link[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+
+/* The panel lifts into place rather than appearing. `visibility` is animated
+   alongside opacity so the menu cannot be clicked while it is fading out. */
+.nav-menu {
+  transform: translateY(-0.4rem);
+  transition:
+    opacity 0.24s var(--ease-out-soft),
+    transform 0.24s var(--ease-out-soft),
+    visibility 0.24s;
+}
+
+.group:hover > .nav-menu,
+.group:focus-within > .nav-menu {
+  transform: translateY(0);
+}
+
+/* Items arrive one after another. Six steps is enough for every menu this site
+   has; anything past the sixth simply arrives with it. */
+.nav-menu a {
+  opacity: 0;
+  transform: translateY(-0.25rem);
+  transition:
+    opacity 0.26s var(--ease-out-soft),
+    transform 0.26s var(--ease-out-soft),
+    background-color 0.15s;
+}
+
+.group:hover .nav-menu a,
+.group:focus-within .nav-menu a {
+  opacity: 1;
+  transform: none;
+}
+
+.nav-menu a:nth-child(1) { transition-delay: 0.02s; }
+.nav-menu a:nth-child(2) { transition-delay: 0.05s; }
+.nav-menu a:nth-child(3) { transition-delay: 0.08s; }
+.nav-menu a:nth-child(4) { transition-delay: 0.11s; }
+.nav-menu a:nth-child(5) { transition-delay: 0.14s; }
+.nav-menu a:nth-child(6) { transition-delay: 0.17s; }
+
+/* -------------------------------------------------------------------------- */
+/* Guided steps                                                                */
+/* -------------------------------------------------------------------------- */
+
+/* Each step arrives as it is scrolled to, and its number lands a beat after the
+   words so the eye is drawn along the rail rather than to all of them at once.
+   Same view() timeline as the gallery: no observer, no client component. */
+@keyframes panduan-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes panduan-dot-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .panduan .panduan-body {
+    animation: panduan-in 0.5s var(--ease-out-soft) both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 45%;
+  }
+
+  .panduan .panduan-dot {
+    animation: panduan-dot-in 0.45s var(--ease-out-soft) both;
+    animation-timeline: view();
+    animation-range: entry 5% entry 40%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -713,6 +831,27 @@ p {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+
+  /* Same trap in the menu: the items start at opacity 0 and are revealed by a
+     transition. With transitions suppressed they would simply never appear, so
+     the resting state is made the visible one. */
+  .nav-menu a {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  /* Instructions must never be the thing an animation hides. */
+  .panduan .panduan-body,
+  .panduan .panduan-dot {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .nav-link::after {
+    transition: none;
   }
 
   /* Stopping the animation is not enough on its own. The track is a single
