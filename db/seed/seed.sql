@@ -81,8 +81,14 @@ INSERT INTO villages (
   country, latitude, longitude, map_zoom, address, phone, whatsapp, email,
   primary_color, secondary_color, accent_color, locale, timezone, status
 ) VALUES (
+  -- Desa Sukakarya, Kecamatan Sukakarya, Kabupaten Bekasi, Jawa Barat.
+  -- These three were NULL, which is not a neutral default: the letterhead on a
+  -- printed surat falls back to the word "Kabupaten" with nothing after it, and
+  -- resident registration loses its regency anchor - the check that stops a
+  -- Sukakarya from another regency registering here. A village reselling this
+  -- script changes these four lines, or edits them in Pengaturan Desa.
   'vil_demo', 'demo', NULL, 'Sukakarya', 'Desa',
-  NULL, NULL, NULL,
+  'Sukakarya', 'Kabupaten Bekasi', 'Jawa Barat',
   'Indonesia', NULL, NULL, 14,
   NULL, NULL, NULL,
   NULL,

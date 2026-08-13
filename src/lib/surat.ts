@@ -30,9 +30,13 @@ export async function getLetterForPrint(
 ): Promise<LetterRow | null> {
   return getDb()
     .prepare(
+      // `submitted_at`, aliased. The column on letter_requests has always been
+      // called submitted_at; this query asked for created_at and so every
+      // attempt to print a letter answered 500 - the one screen in the panel
+      // that no test opened, because opening it needs a letter to exist first.
       `SELECT lr.id, lr.ticket, lr.applicant_name, lr.contact, lr.payload,
-              lr.created_at, s.name AS service_name, s.letter_template,
-              s.valid_days
+              lr.submitted_at AS created_at, s.name AS service_name,
+              s.letter_template, s.valid_days
          FROM letter_requests lr
          JOIN services s ON s.id = lr.service_id
         WHERE lr.id = ? AND lr.village_id = ?
@@ -93,6 +97,17 @@ export async function buildLetterValues(
     kecamatan: village.district ?? "",
     kabupaten: village.regency ?? "",
     provinsi: village.province ?? "",
+    // The three above joined, with the empty ones dropped. Written out
+    // separately in a template they produce "Kecamatan , , ," on any village
+    // that has not filled its address in yet - which is every village on the
+    // day it installs this.
+    wilayah_desa: [
+      village.district ? `Kecamatan ${village.district}` : "",
+      village.regency ?? "",
+      village.province ?? "",
+    ]
+      .filter(Boolean)
+      .join(", "),
     alamat_desa: village.address ?? "",
     nama_kepala_desa: head?.fullName ?? "",
     jabatan_kepala_desa: head?.position ?? `Kepala ${village.entityLabel}`,

@@ -84,7 +84,7 @@ export default async function AlbumPage({
         {items.length === 0 ? (
           <EmptyState title="Album ini masih kosong." />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="tile-reveal grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item) => (
               <Card key={item.id}>
                 {item.embedUrl ? (
