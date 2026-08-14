@@ -78,6 +78,29 @@ jobs:
         run: |
           npx wrangler d1 execute app-desa-db --local --file=./db/seed/modules.sql
           npx wrangler d1 execute app-desa-db --local --file=./db/seed/seed.sql
+          # base-content.sql was missing here, so CI exercised three of the five
+          # seeded services and never saw the other two - nor the letter wording
+          # that lives in this file. A check that runs against half an install
+          # reports on half an install.
+          npx wrangler d1 execute app-desa-db --local --file=./db/seed/base-content.sql
+
+      # Migrations run before any seed, so a migration that fills a column on
+      # rows the seed has not inserted yet quietly does nothing. That is how the
+      # five original letters ended up with no wording on a fresh install, while
+      # working perfectly on the already-seeded production database. Asserting
+      # on the state AFTER seeding is the only thing that sees it.
+      - name: Assert every published letter has wording
+        run: |
+          EMPTY=$(npx wrangler d1 execute app-desa-db --local \
+            --command="SELECT COUNT(*) AS n FROM services WHERE status='published' AND (letter_template IS NULL OR letter_template='')" --json \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s)[0].results[0].n))")
+          echo "layanan tanpa naskah surat: $EMPTY"
+          if [ "$EMPTY" -ne 0 ]; then
+            npx wrangler d1 execute app-desa-db --local \
+              --command="SELECT slug FROM services WHERE status='published' AND (letter_template IS NULL OR letter_template='')"
+            echo "::error::${EMPTY} layanan terbit tanpa naskah surat. Halaman cetaknya akan kosong pada pemasangan baru."
+            exit 1
+          fi
 
       - name: Assert the catalogue landed with all 300 modules
         run: |
