@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { getDb } from "@/lib/env";
 import { newId } from "@/lib/id";
+import { hashPassword } from "@/lib/auth";
 import { hashNik, readKtp, verifyAgainstVillage } from "@/lib/ktp";
 import { storeMedia } from "@/lib/media";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -39,10 +40,17 @@ async function register(formData: FormData) {
 
   const fullName = String(formData.get("fullName") ?? "").trim().slice(0, 120);
   const contact = String(formData.get("contact") ?? "").trim().slice(0, 120);
+  const password = String(formData.get("password") ?? "");
   const photo = formData.get("ktp");
 
   if (!fullName || !(photo instanceof File) || photo.size === 0) {
     redirect("/daftar?error=lengkap");
+  }
+  // Eight characters, matching what the form asks for. The rule is checked here
+  // as well as in the browser because the browser check is a courtesy and this
+  // one is the actual gate.
+  if (password.length < 8) {
+    redirect("/daftar?error=sandi");
   }
   if (!OK_TYPES.has(photo.type)) {
     redirect("/daftar?error=format");
@@ -84,21 +92,26 @@ async function register(formData: FormData) {
     altText: null,
   });
 
+  const credentials = await hashPassword(password);
+
   const nik = verdict.reading.nik;
   await getDb()
     .prepare(
       `INSERT INTO resident_registrations
          (id, village_id, full_name, nik_hash, nik_last4, contact,
           read_name, read_village, read_district, read_regency, read_province,
-          ktp_media_id, match_result, match_note, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+          ktp_media_id, match_result, match_note, status,
+          password_hash, password_salt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
        ON CONFLICT (village_id, nik_hash) DO UPDATE SET
-         full_name    = excluded.full_name,
-         contact      = excluded.contact,
-         ktp_media_id = excluded.ktp_media_id,
-         match_result = excluded.match_result,
-         status       = 'pending',
-         updated_at   = datetime('now')`,
+         full_name     = excluded.full_name,
+         contact       = excluded.contact,
+         ktp_media_id  = excluded.ktp_media_id,
+         match_result  = excluded.match_result,
+         status        = 'pending',
+         password_hash = excluded.password_hash,
+         password_salt = excluded.password_salt,
+         updated_at    = datetime('now')`,
     )
     .bind(
       newId("reg"),
@@ -118,6 +131,8 @@ async function register(formData: FormData) {
       stored.id,
       verdict.result,
       verdict.message,
+      credentials.hash,
+      credentials.salt,
     )
     .run();
 
@@ -138,6 +153,7 @@ export default async function DaftarPage({
     format: "Foto harus berformat JPG, PNG atau WEBP.",
     besar: "Ukuran foto melebihi 8 MB. Potret ulang dengan resolusi lebih kecil.",
     sibuk: "Pendaftaran sedang ramai. Coba lagi beberapa menit lagi.",
+    sandi: "Kata sandi minimal 8 karakter.",
     wilayah:
       `Pendaftaran hanya untuk warga ${village.entityLabel} ${village.name}` +
       `${where ? `, ${where}` : ""}. KTP yang Anda unggah tercatat di wilayah lain.`,
@@ -175,12 +191,12 @@ export default async function DaftarPage({
               body: "Letakkan KTP di permukaan rata dengan cahaya cukup. Seluruh kartu harus masuk dalam bingkai dan tulisannya terbaca. Hindari pantulan cahaya dan bayangan tangan.",
             },
             {
-              title: "Isi nama dan kontak",
-              body: "Nama sesuai KTP, dan nomor WhatsApp atau email yang aktif. Petugas memakai kontak ini untuk mengabari hasil pendaftaran Anda.",
+              title: "Isi nama, kontak dan kata sandi",
+              body: "Nama sesuai KTP, dan nomor WhatsApp atau email yang aktif. Kata sandi dipakai untuk masuk ke akun Anda setelah pendaftaran disetujui — simpan baik-baik, petugas tidak dapat melihatnya.",
             },
             {
-              title: "Kirim, lalu tunggu dihubungi",
-              body: "Foto dibaca otomatis untuk mencocokkan wilayah, lalu diperiksa petugas desa. Kartu yang kurang jelas tetap kami terima dan diperiksa manual — Anda tidak perlu mengulang dari awal.",
+              title: "Kirim, lalu tunggu disetujui",
+              body: "Foto dibaca otomatis untuk mencocokkan wilayah, lalu diperiksa petugas desa. Kartu yang kurang jelas tetap kami terima dan diperiksa manual — Anda tidak perlu mengulang dari awal. Setelah disetujui, Anda bisa masuk ke akun untuk mengajukan surat dan memantau statusnya.",
               aside: (
                 <p>
                   <strong>Yang tidak kami simpan:</strong> nomor NIK Anda. Yang
@@ -242,6 +258,25 @@ export default async function DaftarPage({
             />
             <p className="mt-1 text-xs text-[var(--text-muted)]">
               Dipakai petugas untuk menghubungi Anda soal pendaftaran ini.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium">
+              Kata Sandi
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5"
+            />
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              Minimal 8 karakter. Dipakai untuk masuk ke akun Anda setelah
+              pendaftaran disetujui petugas.
             </p>
           </div>
 

@@ -6,6 +6,8 @@ import { getViewer } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { getDb } from "@/lib/env";
 import { listMedia } from "@/lib/media";
+import { EWALLET_SETTING, QRIS_SETTING } from "@/lib/payment";
+import { isQrisPayload } from "@/lib/qris";
 import { getVillageSettings, requireVillage } from "@/lib/village";
 
 export const dynamic = "force-dynamic";
@@ -134,6 +136,29 @@ async function saveSettings(formData: FormData) {
       new Date().toISOString(),
     )
     .run();
+
+  // Payment. The QRIS string is the village's own, copied from its merchant
+  // account; it is stored verbatim because every character is part of a
+  // checksummed payload. Rejected outright when it is not a QRIS at all, so a
+  // wrong paste fails here rather than becoming a QR nobody can pay.
+  const qris = String(formData.get("qrisPayload") ?? "").trim();
+  if (qris && !isQrisPayload(qris)) {
+    redirect("/admin/pengaturan?error=qris");
+  }
+  for (const [key, value] of [
+    [QRIS_SETTING, qris],
+    [EWALLET_SETTING, String(formData.get("ewalletNote") ?? "").trim().slice(0, 500)],
+  ] as const) {
+    await getDb()
+      .prepare(
+        `INSERT INTO village_settings (village_id, key, value, value_type, updated_at)
+         VALUES (?, ?, ?, 'string', ?)
+         ON CONFLICT (village_id, key)
+         DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+      )
+      .bind(village.id, key, value, new Date().toISOString())
+      .run();
+  }
 
   // Letters, digits, dash and underscore only: the code becomes a URL segment,
   // and anything needing escaping there would be typed wrong at least once.
@@ -282,6 +307,7 @@ export default async function AdminSettingsPage({
   const demoStamp = settings["site.demo_stamp"] === "1";
   const adminKnock = settings["site.admin_knock"] ?? "";
   const regencyEmblem = settings["site.regency_emblem_media_id"] ?? "";
+  const payment = await getVillageSettings(village.id, "payment.");
 
   return (
     <div className="p-6 lg:p-8">
@@ -412,6 +438,59 @@ export default async function AdminSettingsPage({
         </section>
 
         <section className="rounded-xl border border-[var(--border)] p-5">
+          <h2 className="font-semibold">Pembayaran Surat</h2>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
+            Biaya tiap surat diatur di <strong>Layanan Surat</strong>, bukan di
+            sini. Halaman ini hanya menentukan <em>cara</em> warga membayarnya,
+            dan biaya hanya tampil di akun warga — tidak pernah di beranda.
+          </p>
+          <div className="mt-4 grid gap-4">
+            <div>
+              <label htmlFor="qrisPayload" className="block text-sm font-medium">
+                Kode QRIS Statis Desa
+              </label>
+              <textarea
+                id="qrisPayload"
+                name="qrisPayload"
+                rows={4}
+                defaultValue={payment["payment.qris_payload"] ?? ""}
+                spellCheck={false}
+                className={`${field} font-mono text-xs`}
+              />
+              <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">
+                Tempel isi QRIS statis milik desa — teks panjang yang diawali{" "}
+                <code>0002 01</code>, didapat dari akun merchant desa (DANA,
+                bank, atau penyedia QRIS lain). Sistem menyuntikkan nominal tiap
+                pengajuan ke dalamnya, jadi warga tidak perlu mengetik jumlah.
+                <strong className="mt-1 block text-[var(--text)]">
+                  Sistem tidak dapat membuat QRIS sendiri: kode yang sah wajib
+                  memuat nomor merchant yang diterbitkan penyedia berizin. Kode
+                  karangan akan terbaca pemindai tetapi uangnya tidak sampai ke
+                  mana pun.
+                </strong>
+              </p>
+            </div>
+            <div>
+              <label htmlFor="ewalletNote" className="block text-sm font-medium">
+                Keterangan Pembayaran Lain
+              </label>
+              <textarea
+                id="ewalletNote"
+                name="ewalletNote"
+                rows={3}
+                maxLength={500}
+                defaultValue={payment["payment.ewallet_note"] ?? ""}
+                className={field}
+              />
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                Tampil di bawah QR pada akun warga. Misalnya nomor DANA atau
+                rekening bank desa, untuk warga yang tidak memakai QRIS.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-xl border border-[var(--border)] p-5">
           <h2 className="font-semibold">Kode Ketuk Panel Admin</h2>
           <p className="mt-1 text-xs text-[var(--text-muted)]">
             Selama kode ini terisi, <code>/admin/login</code> menjawab 404 untuk

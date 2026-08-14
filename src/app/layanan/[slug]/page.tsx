@@ -8,6 +8,7 @@ import { getViewer, hashIp } from "@/lib/auth";
 import { getDb } from "@/lib/env";
 import { formatCurrency } from "@/lib/format";
 import { newId, newTicket } from "@/lib/id";
+import { newPaymentCode } from "@/lib/payment";
 import { getVillageModules, shouldRender } from "@/lib/modules/registry";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -132,12 +133,17 @@ async function submitRequest(formData: FormData) {
   const { applicantName, contact, ...payload } = values;
   const ticket = newTicket("SRT");
 
+  // The fee is copied onto the request, not read from the service later. A
+  // village that raises its tariff next month must not change what somebody
+  // who applied today owes.
+  const fee = Math.max(0, Math.floor(Number(service.fee) || 0));
+
   await getDb()
     .prepare(
       `INSERT INTO letter_requests
          (id, village_id, service_id, ticket, user_id, applicant_name,
-          contact, payload, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'submitted')`,
+          contact, payload, status, fee_amount, payment_code, payment_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'submitted', ?, ?, ?)`,
     )
     .bind(
       newId("ltr"),
@@ -148,6 +154,11 @@ async function submitRequest(formData: FormData) {
       applicantName,
       contact || null,
       JSON.stringify(payload),
+      fee,
+      // A free letter has nothing to reconcile, so it carries no code at all
+      // rather than a code that means nothing.
+      fee > 0 ? newPaymentCode() : null,
+      fee > 0 ? "unpaid" : "waived",
     )
     .run();
 

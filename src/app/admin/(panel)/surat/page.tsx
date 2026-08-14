@@ -6,7 +6,7 @@ import { canAccess } from "@/lib/access";
 import { getViewer } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { getDb } from "@/lib/env";
-import { formatDateTime } from "@/lib/format";
+import { formatCurrency, formatDateTime } from "@/lib/format";
 import { newId } from "@/lib/id";
 import { requireVillage } from "@/lib/village";
 
@@ -31,6 +31,50 @@ interface RequestRow {
   status: string;
   note: string | null;
   submitted_at: string;
+  fee_amount: number;
+  payment_code: string | null;
+  payment_status: string;
+}
+
+/**
+ * Marks a request paid.
+ *
+ * Confirmation is a person's job, not the system's: knowing that money landed
+ * needs an account with the payment provider and a webhook from them. Until a
+ * village has that, an officer reconciles the transfer against the payment code
+ * on their e-wallet statement and presses this. The screen says so plainly
+ * rather than implying the status will change by itself.
+ */
+async function markPaid(formData: FormData) {
+  "use server";
+
+  const viewer = await getViewer();
+  if (!canAccess(viewer, "staff")) redirect("/admin/login");
+
+  const village = await requireVillage();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await getDb()
+    .prepare(
+      `UPDATE letter_requests
+          SET payment_status = 'paid', paid_at = datetime('now'),
+              paid_confirmed_by = ?, updated_at = datetime('now')
+        WHERE id = ? AND village_id = ? AND payment_status = 'unpaid'`,
+    )
+    .bind(viewer.userId, id, village.id)
+    .run();
+
+  await logAudit({
+    villageId: village.id,
+    actorId: viewer.userId,
+    action: "update",
+    resource: "letter_requests",
+    resourceId: id,
+    summary: "Pembayaran dikonfirmasi petugas",
+  });
+
+  revalidatePath("/admin/surat");
 }
 
 async function updateRequest(formData: FormData) {
@@ -89,7 +133,8 @@ export default async function AdminLettersPage() {
   const { results } = await getDb()
     .prepare(
       `SELECT lr.id, lr.ticket, lr.applicant_name, s.name AS service_name,
-              lr.status, lr.note, lr.submitted_at
+              lr.status, lr.note, lr.submitted_at,
+              lr.fee_amount, lr.payment_code, lr.payment_status
        FROM letter_requests lr
        JOIN services s ON s.id = lr.service_id
        WHERE lr.village_id = ?
@@ -121,6 +166,7 @@ export default async function AdminLettersPage() {
                 <th className="px-3 py-2 font-semibold">Tiket</th>
                 <th className="px-3 py-2 font-semibold">Pemohon</th>
                 <th className="px-3 py-2 font-semibold">Layanan</th>
+                <th className="px-3 py-2 font-semibold">Biaya</th>
                 <th className="px-3 py-2 font-semibold">Diajukan</th>
                 <th className="px-3 py-2 font-semibold">Status &amp; Catatan</th>
               </tr>
@@ -141,6 +187,47 @@ export default async function AdminLettersPage() {
                   </td>
                   <td className="px-3 py-2">{request.applicant_name}</td>
                   <td className="px-3 py-2">{request.service_name}</td>
+                  <td className="px-3 py-2">
+                    {request.fee_amount > 0 &&
+                    request.payment_status === "unpaid" ? (
+                      <form
+                        id={`bayar-${request.id}`}
+                        action={markPaid}
+                        className="hidden"
+                      >
+                        <input type="hidden" name="id" value={request.id} />
+                      </form>
+                    ) : null}
+                    {request.fee_amount > 0 ? (
+                      <div className="min-w-36">
+                        <span className="block font-medium">
+                          {formatCurrency(request.fee_amount)}
+                        </span>
+                        {request.payment_code ? (
+                          <span className="block font-mono text-[0.6875rem] text-[var(--text-muted)]">
+                            {request.payment_code}
+                          </span>
+                        ) : null}
+                        {request.payment_status === "paid" ? (
+                          <span className="mt-1 inline-block rounded-full bg-green-100 px-2 py-0.5 text-[0.6875rem] font-semibold text-green-800 dark:bg-green-950 dark:text-green-300">
+                            Lunas
+                          </span>
+                        ) : (
+                          // A sibling form: forms cannot nest, and this row
+                          // already sits inside the status/note form.
+                          <button
+                            type="submit"
+                            form={`bayar-${request.id}`}
+                            className="mt-1 rounded-md border border-[var(--border-strong)] px-2 py-0.5 text-[0.6875rem] font-semibold hover:bg-[var(--surface-2)]"
+                          >
+                            Tandai Lunas
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[var(--text-muted)]">Gratis</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2 text-[var(--text-muted)]">
                     {formatDateTime(request.submitted_at, locale, village.timezone)}
                   </td>

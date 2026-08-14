@@ -27,8 +27,13 @@ const ROOT = "src";
 /* ---------------------------------------------------------------- schema -- */
 
 // Lines inside CREATE TABLE that declare a constraint rather than a column.
+//
+// Deliberately no bare `key`: that is MySQL's index syntax, SQLite has no such
+// clause, and `village_settings` has a column actually named `key`. Listing it
+// here hid that column from the schema and made three correct queries look
+// wrong. PRIMARY KEY and FOREIGN KEY are still caught on their first word.
 const CONSTRAINT =
-  /^(primary|foreign|unique|check|constraint|key)\b/i;
+  /^(primary|foreign|unique|check|constraint)\b/i;
 
 /**
  * The schema is read from the migration files, not from a live database.
@@ -163,6 +168,24 @@ function checkFile(path, tables) {
       if (!table) continue;
       if (tables.get(table).has(column.toLowerCase())) continue;
       found.push({ line, alias, column, table });
+    }
+
+    // `INSERT INTO user_roles (user_id, role_id, village_id)` names its columns
+    // without any alias, so the loop above cannot see them. That is not a
+    // hypothetical gap: an invented `village_id` in exactly that statement
+    // reached a running server and answered 500 when an officer approved a
+    // resident, with this checker green.
+    for (const insert of sql.matchAll(
+      /INSERT\s+(?:OR\s+\w+\s+)?INTO\s+["`]?([a-z_][a-z0-9_]*)["`]?\s*\(([^)]*)\)/gi,
+    )) {
+      const table = insert[1].toLowerCase();
+      if (!tables.has(table)) continue;
+      for (const raw of insert[2].split(",")) {
+        const column = raw.trim().replace(/^["`]|["`]$/g, "").toLowerCase();
+        if (!column || !/^[a-z_][a-z0-9_]*$/.test(column)) continue;
+        if (tables.get(table).has(column)) continue;
+        found.push({ line, alias: table, column, table });
+      }
     }
   }
   return found;
