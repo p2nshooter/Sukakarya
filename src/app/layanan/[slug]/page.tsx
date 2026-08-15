@@ -341,14 +341,25 @@ export default async function ServiceDetailPage({
                       Masuk terlebih dahulu untuk mengajukan{" "}
                       {service.name.toLowerCase()}.
                     </p>
-                    <ButtonLink
-                      href="/admin/login"
-                      size="sm"
-                      className="mt-4"
-                    >
-                      Masuk
-                      <IconArrowRight className="h-4 w-4" />
-                    </ButtonLink>
+                    {/* `/masuk`, not `/admin/login`. The staff sign-in sits
+                        behind the knock code and answers 404 to anyone who has
+                        not knocked, so this button sent every resident who
+                        pressed it to a page that does not exist. */}
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <ButtonLink href="/masuk" size="sm">
+                        Masuk
+                        <IconArrowRight className="h-4 w-4" />
+                      </ButtonLink>
+                      {/* Somebody who has never registered had no way forward
+                          at all: one button, and it assumed an account they do
+                          not have. */}
+                      <Link
+                        href="/daftar"
+                        className="text-sm font-semibold text-brand hover:underline"
+                      >
+                        Belum punya akun? Daftar
+                      </Link>
+                    </div>
                   </Notice>
                 </div>
               ) : (

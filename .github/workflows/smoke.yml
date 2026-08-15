@@ -93,7 +93,21 @@ jobs:
           }
 
           check "Homepage"       "/"                200
-          check "Admin login"    "/admin/login"     200
+
+          # The staff sign-in answers 200 when no knock code is configured and
+          # 404 once one is - and 404 is the feature working, not a fault. A
+          # flat `check ... 200` here would turn the village switching the knock
+          # on into a red run reporting correct behaviour, which is the fastest
+          # way to teach somebody to ignore this report.
+          login=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${BASE}/admin/login" || echo 000)
+          if [ "$login" = "200" ] || [ "$login" = "404" ]; then
+            mark="✅"; note=$([ "$login" = "404" ] && echo "tersembunyi di balik kode ketuk" || echo "terbuka")
+          else
+            mark="❌"; note="tak terduga"; failures=$((failures+1))
+          fi
+          echo "${mark} Admin login /admin/login - want 200 atau 404, got ${login} (${note})"
+          echo "| Admin login \`/admin/login\` | 200 atau 404 | ${login} ${note} | ${mark} |" >> "$GITHUB_STEP_SUMMARY"
+
           check "Sitemap"        "/sitemap.xml"     200
           check "Robots"         "/robots.txt"      200
           check "Unknown page"   "/tidak-ada-nya"   404
@@ -164,6 +178,14 @@ jobs:
           # only way to know whether it is still live is to ask the live site.
           # Twice now something was "shipped" that production never received;
           # these turn the third time into a red run instead of a discovery.
+          # The resident's own doors. `/masuk` and `/daftar` are the only way
+          # into an account, and a letter that requires one used to send people
+          # to the staff sign-in - which sits behind the knock code and answers
+          # 404. A resident who pressed it reached a page that does not exist.
+          check    "Resident sign-in"    "/masuk"  200
+          check    "Resident register"   "/daftar" 200
+          absent   "No staff login link for residents" "/layanan/surat-keterangan-tidak-mampu" "/admin/login"
+
           contains "Kepala Desa photo is served" "/" "med_kades_sukakarya"
           contains "Welcome video is served"     "/" "med_sambutan_video"
           contains "Profile video is served"     "/" "med_profil_video"
