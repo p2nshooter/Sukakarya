@@ -373,7 +373,7 @@ export default async function AdminSettingsPage({
               name="latitude"
               label="Titik Peta — Lintang"
               value={village.latitude === null ? null : String(village.latitude)}
-              hint="Contoh: -6.2419. Buka kantor desa di Google Maps, klik kanan titiknya, lalu salin angka pertama."
+              hint="Buka kantor desa di Google Maps, klik kanan titiknya, lalu salin angka pertama — bentuknya seperti -6.1234."
             />
             <Text
               name="longitude"
@@ -381,7 +381,7 @@ export default async function AdminSettingsPage({
               value={
                 village.longitude === null ? null : String(village.longitude)
               }
-              hint="Angka kedua dari koordinat yang sama. Contoh: 107.1523."
+              hint="Angka kedua dari koordinat yang sama — bentuknya seperti 107.1234."
             />
             <Text
               name="mapZoom"

@@ -102,7 +102,11 @@ INSERT INTO villages (
   -- script changes these four lines, or edits them in Pengaturan Desa.
   'vil_demo', 'demo', NULL, 'Sukakarya', 'Desa',
   'Sukakarya', 'Kabupaten Bekasi', 'Jawa Barat',
-  'Indonesia', NULL, NULL, 14,
+  -- Latitude, longitude and zoom for the village office. Without them the
+  -- Peta Lokasi section renders nothing at all - it refuses to guess, because a
+  -- pin on a government site is read as an address. A village reselling this
+  -- script replaces these three with its own, or edits them in Pengaturan Desa.
+  'Indonesia', -6.2419, 107.1523, 15,
   NULL, NULL, NULL,
   NULL,
   '#0d6b52', '#084a39', '#b98a2e', 'id', 'Asia/Jakarta', 'active'
