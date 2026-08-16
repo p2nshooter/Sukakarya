@@ -190,14 +190,28 @@ jobs:
           contains "Welcome video is served"     "/" "med_sambutan_video"
           contains "Profile video is served"     "/" "med_profil_video"
 
-          # The map point. `latitude`/`longitude` were NULL from the first
-          # install until now, and the Peta Lokasi section renders nothing at
-          # all without them - so the map was silently absent for months and
-          # nothing reported it. The marker coordinates appear in the embed URL,
-          # which makes "the map is on the page, pointing at the office" a thing
-          # the live site can actually be asked.
+          # The map point. The Peta Lokasi section renders nothing at all
+          # without coordinates, and a pin on a government site is read as an
+          # address - so both "is there a map" and "does it point at the office"
+          # are worth asking the live site rather than assuming from the repo.
+          #
+          # This one reports the value it found instead of just "missing". The
+          # first version said only that, and a run that tells you to go and
+          # look is a run that has not done the job this report exists for: the
+          # answer was that the map was there and aimed somewhere else, which
+          # took a separate investigation to discover.
           contains "Map section is rendered"  "/" "openstreetmap.org/export/embed"
-          contains "Map points at the office" "/" "marker=-6.2419"
+
+          want_marker="marker=-6.2419%2C107.1523"
+          got_marker=$(curl -sS --max-time 30 "${BASE}/" \
+            | grep -o 'marker=[-0-9.]*%2C[-0-9.]*' | head -1)
+          if [ "$got_marker" = "$want_marker" ]; then
+            mark="✅"
+          else
+            mark="❌"; failures=$((failures+1))
+          fi
+          echo "${mark} Map points at the office - want '${want_marker}', got '${got_marker:-tidak ada penanda}'"
+          echo "| Map points at the office | \`${want_marker}\` | \`${got_marker:-tidak ada penanda}\` | ${mark} |" >> "$GITHUB_STEP_SUMMARY"
 
           echo "" >> "$GITHUB_STEP_SUMMARY"
           if [ "$failures" -ne 0 ]; then
