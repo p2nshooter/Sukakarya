@@ -16,6 +16,7 @@ import {
   listStatistics,
   listTourism,
   listUmkm,
+  type ServiceItem,
 } from "@/lib/content";
 import {
   formatCurrency,
@@ -1188,7 +1189,13 @@ export async function ApbdesRingkas({ village, section }: SectionProps) {
 /* -------------------------------------------------------------------------- */
 
 export async function LayananSection({ village, section }: SectionProps) {
-  const services = await listServices(village.id);
+  // Narrowed on purpose: the beranda must not quote a price, and a comment
+  // saying so is only as good as the next person who reads it. Dropping `fee`
+  // from the type turns "put the biaya badge back" into a build failure rather
+  // than something that ships and is noticed by whoever opens the front page.
+  const services: readonly Omit<ServiceItem, "fee">[] = await listServices(
+    village.id,
+  );
   if (services.length === 0) return null;
 
   return (
@@ -1221,13 +1228,17 @@ export async function LayananSection({ village, section }: SectionProps) {
             <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--text-muted)]">
               {truncate(service.description, 100)}
             </p>
+            {/* Tidak ada biaya di sini. Beranda adalah halaman yang dilihat
+                orang lewat, dan angka rupiah di sampul situs desa terbaca
+                sebagai daftar harga - bukan sebagai tarif resmi satu layanan.
+                Biayanya tetap terbuka: tercantum di katalog /layanan, di
+                halaman layanannya sendiri, dan pada pengajuan warga di
+                portal member, yang ketiganya adalah tempat orang sedang
+                menimbang satu surat tertentu. */}
             <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
               <Badge tone="neutral">
                 <IconClock className="h-3 w-3" />
                 {service.slaDays} hari kerja
-              </Badge>
-              <Badge tone={service.fee > 0 ? "warning" : "success"}>
-                {service.fee > 0 ? formatCurrency(service.fee) : "Gratis"}
               </Badge>
             </div>
           </Card>
