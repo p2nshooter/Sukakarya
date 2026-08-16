@@ -171,6 +171,20 @@ jobs:
           absent   "No placeholder telephone"    "/" "(021) 0000000"
           absent   "No demo village name"        "/" "Desa Contoh"
 
+          # Invented demonstration content must never be live on a real
+          # village's site. db/seed/demo-content.sql makes up news, agenda
+          # items, businesses, tourist sites, population figures and APBDes
+          # lines; bootstrap.yml can apply it, and it is one checkbox away from
+          # a village publishing a budget it never passed and a Posyandu
+          # schedule nobody will turn up to.
+          #
+          # The step has been skipped on every bootstrap run so far, so nothing
+          # invented is published today. That is a fact about six past runs, not
+          # a property of the system - which is exactly the kind of thing worth
+          # asking the live site on every deploy instead of remembering.
+          absent   "No invented news"    "/" "Cakupan Imunisasi Balita Naik"
+          absent   "No invented agenda"  "/" "Musyawarah Dusun Sukasari"
+
           # Leftovers from automated panel tests.
           #
           # The browser tests that exercise Tata Letak rename a section and add
