@@ -57,7 +57,11 @@ jobs:
           # learn anything from.
           check() {
             label="$1"; path="$2"; want="$3"
-            got=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${BASE}${path}" || echo 000)
+            # No `|| echo 000` here: curl writes its -w output even when the
+            # connection fails, so the fallback used to run as well and the
+            # report read "got 000000" - which is the line somebody stares at
+            # during an outage, when a confusing number costs the most.
+            got=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${BASE}${path}" 2>/dev/null)
             if [ "$got" = "$want" ]; then mark="✅"; else mark="❌"; failures=$((failures+1)); fi
             echo "${mark} ${label} ${path} - want ${want}, got ${got}"
             echo "| ${label} \`${path}\` | ${want} | ${got} | ${mark} |" >> "$GITHUB_STEP_SUMMARY"
@@ -121,6 +125,20 @@ jobs:
           # A service detail page proves the dynamic form engine reached the
           # database, not just that the listing rendered.
           check "Service detail" "/layanan/surat-keterangan-usaha" 200
+
+          # The seven letters added after the first install. They reach a live
+          # database only through migration 0011, which inserts each one only
+          # when its slug is absent. A conditional insert that quietly matched
+          # nothing looks identical to one that worked - which is exactly how
+          # the map pin sat on the wrong coordinates while every check was
+          # green. Twelve letters in the repository is not twelve letters a
+          # resident can open, so each one is asked for by name.
+          for slug in surat-keterangan-penghasilan surat-keterangan-belum-menikah \
+                      surat-keterangan-kematian surat-keterangan-kehilangan \
+                      surat-keterangan-ahli-waris surat-izin-keramaian \
+                      surat-keterangan-pindah; do
+            check "Letter ${slug}" "/layanan/${slug}" 200
+          done
 
           # The admin panel must not be reachable without a session. A redirect
           # to the login page is the pass condition; a 200 would mean the gate
