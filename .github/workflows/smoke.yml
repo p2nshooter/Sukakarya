@@ -190,6 +190,15 @@ jobs:
           contains "Welcome video is served"     "/" "med_sambutan_video"
           contains "Profile video is served"     "/" "med_profil_video"
 
+          # The map point. `latitude`/`longitude` were NULL from the first
+          # install until now, and the Peta Lokasi section renders nothing at
+          # all without them - so the map was silently absent for months and
+          # nothing reported it. The marker coordinates appear in the embed URL,
+          # which makes "the map is on the page, pointing at the office" a thing
+          # the live site can actually be asked.
+          contains "Map section is rendered"  "/" "openstreetmap.org/export/embed"
+          contains "Map points at the office" "/" "marker=-6.2419"
+
           echo "" >> "$GITHUB_STEP_SUMMARY"
           if [ "$failures" -ne 0 ]; then
             echo "**${failures} check(s) failed.**" >> "$GITHUB_STEP_SUMMARY"
