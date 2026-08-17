@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -41,11 +42,20 @@ export default async function TourismPage() {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item) => (
-              <Card key={item.id} className="flex flex-col">
+              <Card key={item.id} className="flex flex-col transition hover:border-brand">
                 <Thumb src={mediaUrl(item.coverMediaId)} alt={item.name} />
                 <div className="flex flex-1 flex-col p-4">
                   <Badge>{item.kind}</Badge>
-                  <h2 className="mt-2 font-semibold">{item.name}</h2>
+                  {/* Kartu di sini sempat tidak menautkan ke mana pun, padahal
+                      halaman rincinya ada, terisi, dan sudah ditautkan dari
+                      beranda. Beranda hanya memuat beberapa destinasi teratas,
+                      jadi halaman inilah tempat orang menelusuri semuanya -
+                      dan di situ setiap kartunya buntu. */}
+                  <h2 className="mt-2 font-semibold">
+                    <Link href={`/wisata/${item.slug}`} className="hover:text-brand">
+                      {item.name}
+                    </Link>
+                  </h2>
                   <p className="mt-1 flex-1 text-sm text-[var(--text-muted)]">
                     {truncate(item.description, 120)}
                   </p>
