@@ -79,9 +79,15 @@ export async function generateMetadata(): Promise<Metadata> {
       `Portal resmi ${fullName}${region ? `, ${region}` : ""}. Informasi, ` +
       `transparansi anggaran, layanan surat online dan pengaduan warga.`,
     applicationName: fullName,
-    icons: village.faviconMediaId
-      ? { icon: mediaUrl(village.faviconMediaId)! }
-      : undefined,
+    // Jatuh ke lambang desa bila favicon khusus belum diunggah. Tanpa ini,
+    // pemasangan baru tidak menyatakan ikon sama sekali, peramban meminta
+    // /favicon.ico, dan dijawab 404 pada setiap kunjungan - tab tanpa lambang
+    // di situs pemerintah desa. Lambangnya sudah ada di sana; yang kurang
+    // hanya menyebutkannya.
+    icons: (() => {
+      const id = village.faviconMediaId ?? village.logoMediaId;
+      return id ? { icon: mediaUrl(id)! } : undefined;
+    })(),
     openGraph: {
       type: "website",
       siteName: fullName,

@@ -272,6 +272,18 @@ jobs:
           # look is a run that has not done the job this report exists for: the
           # answer was that the map was there and aimed somewhere else, which
           # took a separate investigation to discover.
+          # Dead ends found by crawling the site rather than reading it. The
+          # tourism listing drew its cards with no link on them, so every
+          # destination page existed, was filled in, was linked from the
+          # beranda - and was unreachable from the one page a visitor browses
+          # them on. Nothing about the code looked wrong; only following the
+          # links showed it.
+          contains "Tourism list links to detail" "/wisata" "href=\"/wisata/"
+
+          # A declared icon. Without it the browser asks for /favicon.ico and is
+          # answered 404 on every visit, and the tab carries no crest.
+          contains "Favicon is declared" "/" "rel=\"icon\""
+
           contains "Map section is rendered"  "/" "openstreetmap.org/export/embed"
 
           want_marker="marker=-6.2419%2C107.1523"
