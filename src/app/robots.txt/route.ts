@@ -19,12 +19,23 @@ export async function GET(request: Request) {
     });
   }
 
+  // Satu pengecualian di dalam /media/: gambar yang dipakai sebagai pratinjau
+  // tautan. Sebagian pengambil pratinjau menghormati berkas ini, dan bila
+  // seluruh /media/ tertutup, tautan desa yang dibagikan muncul tanpa gambar
+  // meski og:image sudah dinyatakan. Yang dibuka hanya satu berkas lambang -
+  // aturan yang lebih spesifik menang atas Disallow di atasnya, dan unggahan
+  // warga tetap tertutup seluruhnya.
+  const ogAllow = village.logoMediaId
+    ? [`Allow: /media/${village.logoMediaId}`]
+    : [];
+
   const body = [
     "User-agent: *",
     "Allow: /",
     "Disallow: /admin",
     "Disallow: /api/",
     "Disallow: /media/",
+    ...ogAllow,
     "",
     `Sitemap: ${origin}/sitemap.xml`,
     "",

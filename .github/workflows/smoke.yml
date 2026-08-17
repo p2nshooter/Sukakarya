@@ -284,6 +284,15 @@ jobs:
           # answered 404 on every visit, and the tab carries no crest.
           contains "Favicon is declared" "/" "rel=\"icon\""
 
+          # The crest is the tab icon and the link-preview image, so a broken
+          # object is not one fault but three: no favicon, no thumbnail when the
+          # site is shared, and a gap on the page. The row in the database and
+          # the object in R2 arrive by different routes - a seed file and a
+          # deploy step - so the name appearing in the HTML says nothing about
+          # whether the file behind it exists. Fetching it does.
+          check    "Village crest actually serves" "/media/med_logo_desa" 200
+          contains "Link preview image declared"   "/" "og:image"
+
           contains "Map section is rendered"  "/" "openstreetmap.org/export/embed"
 
           want_marker="marker=-6.2419%2C107.1523"

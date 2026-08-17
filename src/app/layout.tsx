@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 
@@ -70,6 +71,13 @@ export async function generateMetadata(): Promise<Metadata> {
     .filter(Boolean)
     .join(", ");
 
+  const headerList = await headers();
+  const host = headerList.get("host");
+  const origin = host
+    ? `${host.startsWith("localhost") ? "http" : "https"}://${host}`
+    : "";
+  const ogImage = mediaUrl(village.logoMediaId);
+
   return {
     title: {
       default: `Website Resmi ${fullName}`,
@@ -88,10 +96,19 @@ export async function generateMetadata(): Promise<Metadata> {
       const id = village.faviconMediaId ?? village.logoMediaId;
       return id ? { icon: mediaUrl(id)! } : undefined;
     })(),
+    // Alamat mutlak untuk og:image. Pengambil pratinjau tautan menarik
+    // gambarnya dari servernya sendiri, bukan dari peramban pembaca, jadi
+    // alamat relatif tidak cukup - tanpa ini Next menyusunnya dari localhost.
+    metadataBase: origin ? new URL(origin) : undefined,
     openGraph: {
       type: "website",
       siteName: fullName,
       locale: village.locale === "id" ? "id_ID" : village.locale,
+      // Tanpa gambar, tautan desa yang dibagikan di WhatsApp - jalur berbagi
+      // yang sebenarnya dipakai warga - muncul sebagai sebaris teks polos,
+      // sementara twitter:card sudah terlanjur menjanjikan gambar besar.
+      // Lambang desa sudah ada di sana.
+      images: ogImage ? [{ url: ogImage }] : undefined,
     },
     twitter: { card: "summary_large_image" },
   };
