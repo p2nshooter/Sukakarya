@@ -178,12 +178,52 @@ jobs:
           # a village publishing a budget it never passed and a Posyandu
           # schedule nobody will turn up to.
           #
-          # The step has been skipped on every bootstrap run so far, so nothing
-          # invented is published today. That is a fact about six past runs, not
-          # a property of the system - which is exactly the kind of thing worth
-          # asking the live site on every deploy instead of remembering.
-          absent   "No invented news"    "/" "Cakupan Imunisasi Balita Naik"
-          absent   "No invented agenda"  "/" "Musyawarah Dusun Sukasari"
+          # The bootstrap step that applies it has been skipped on every run, so
+          # I concluded nothing invented was published. The very first run of
+          # this check proved that wrong: "Cakupan Imunisasi Balita Naik" was
+          # live on the homepage. Content reaches the site through the panel as
+          # well as through the seed, so where a row came from says nothing
+          # about whether it is there - only the live site does.
+          #
+          # Asked by slug, one request per item, expecting 404.
+          #
+          # Grepping the listing pages was the first attempt and it under-
+          # reported: /berita shows the newest five, so the sixth invented post
+          # ("Menelusuri Sejarah Desa Sukakarya") was published and reachable
+          # while the check stayed green. A guard that cannot go red guards
+          # nothing. Its own URL answers 200 when the row exists and 404 when it
+          # does not, whatever the listing chooses to show.
+          #
+          # Each item is named separately so a red run says which one to delete
+          # rather than only that something is wrong.
+          for slug in musyawarah-desa-penetapan-apbdes-2026 \
+                      posyandu-balita-cakupan-imunisasi-meningkat \
+                      pelatihan-pengemasan-produk-umkm \
+                      kerja-bakti-normalisasi-saluran-air \
+                      layanan-surat-online-resmi-dibuka \
+                      profil-sejarah-desa-sukakarya; do
+            check "Invented news gone: ${slug}" "/berita/${slug}" 404
+          done
+
+          for slug in posyandu-balita-bulanan musyawarah-dusun-sukasari \
+                      pelatihan-digitalisasi-umkm kerja-bakti-lingkungan \
+                      sosialisasi-bantuan-pangan; do
+            check "Invented agenda gone: ${slug}" "/event/${slug}" 404
+          done
+
+          for slug in kopi-lereng-sukamaju keripik-singkong-bu-tini \
+                      anyaman-bambu-karya-desa batik-tulis-sekar-arum \
+                      gula-aren-manis-lestari madu-hutan-sukatani; do
+            check "Invented UMKM gone: ${slug}" "/umkm/${slug}" 404
+          done
+
+          for slug in curug-sukamaju hamparan-sawah-terasering \
+                      homestay-karya-desa sentra-kuliner-desa; do
+            check "Invented tourism gone: ${slug}" "/wisata/${slug}" 404
+          done
+
+          # Potensi has no detail route, so that one is asked of its listing.
+          absent "Invented potential: sawah" "/potensi" "Persawahan Irigasi Teknis"
 
           # Leftovers from automated panel tests.
           #
